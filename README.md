@@ -1,30 +1,90 @@
-Localis jooksutamine
+# Localis jooksutamine
 
-Installi endale PSQL 17
-Kui tekib probleeme, et PATH variable ei seti automaatselt https://stackoverflow.com/questions/15869808/postgres-psql-command-is-not-recognized-in-windows-environment
+## 1. Installi PostgreSQL 17
 
-Klooni repo
+- Lae alla ja installi [PostgreSQL 17](https://www.postgresql.org/).
+- Kui `psql` käsk ei tööta CMD-s, siis vaata juhendit:  
+  [Postgres psql command is not recognized in Windows environment](https://stackoverflow.com/questions/15869808/postgres-psql-command-is-not-recognized-in-windows-environment).
 
-AVA cmd ja pane kõik read ükshaaval
+---
+
+## 2. Klooni repo
+
+---
+
+## 3. Loo andmebaas ja kasutaja
+
+Ava CMD ja sisesta käsud ükshaaval:
+
+```bash
 psql -U postgres -h localhost
+```
+
+PSQL terminalis sisesta:
+
+```sql
 CREATE DATABASE lennufirma_db;
 CREATE USER lennufirma_user WITH PASSWORD 'user';
 GRANT ALL PRIVILEGES ON DATABASE lennufirma_db TO lennufirma_user;
 ALTER DATABASE lennufirma_db OWNER TO lennufirma_user;
+```
 
-Ava uus cmd kloonitud repo /sql kaustas
-psql -U lennufirma_user -d lennufirma_db -h localhost -f lennufirma_setup.sql;
-password on user nagu enne panid
+---
 
-Nüüd on andmebaas olemas ja jookseb
+## 4. Lae ükles andmebaasi skeem
 
-Installi PHP
-Proovi cmds teha php --v, kui ütleb et on olemas siis kõik õigesti, ma pidin selle extracitud php zipi, mis alla laadisin /Program Files kausta panema ja
-panema Windowsis PATH environment variablele juurde viite sellele kaustale
-Mine kausta, kuhu installisid, tee fail php.ini, kui seda pole veel
-Kopeeri sinna php.ini-development faili sisu
-Võta ; ära extension=pdo_pgsql ja extension=pgsql ridade eest
+- Ava **uus** CMD aken.
+- Liigu kloonitud repo `/sql` kausta.
+- Käivita:
 
-Ava terminal lennufirma_haldur_app kaustas ja pane php -S localhost:8000
-Mine browseris localhost:8000
+```bash
+psql -U lennufirma_user -d lennufirma_db -h localhost -f lennufirma_setup.sql
+```
 
+- Kasutajanimi: `lennufirma_user`  
+- Parool: `user` (nagu varem määrasid)
+
+---
+
+## 5. Installi PHP
+
+- Lae alla ja installi PHP.
+- Kontrolli, kas PHP töötab:
+
+```bash
+php --version
+```
+
+Kui käsu andmisel PHP ei tööta:
+- Extrahi allalaetud PHP zip fail `C:\Program Files\PHP\` kausta.
+- Lisa see kaust PATH environment variable'isse.
+
+---
+
+## 6. PHP seadistamine
+
+- Mine PHP installatsiooni kausta.
+- Kui puudub, siis loo fail `php.ini`.
+- Kopeeri sinna `php.ini-development` faili sisu.
+- Ava `php.ini` ja **eemalda ";"** järgmistelt ridadelt:
+
+```ini
+extension=pdo_pgsql
+extension=pgsql
+```
+
+---
+
+## 7. Käivita server
+
+- Ava terminal **`lennufirma_haldur_app`** kaustas.
+- Käivita:
+
+```bash
+php -S localhost:8000
+```
+
+Mine brauseris aadressile:  
+[http://localhost:8000](http://localhost:8000)
+
+---
