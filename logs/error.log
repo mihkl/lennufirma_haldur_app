@@ -1,0 +1,460 @@
+[2025-04-27 16:56:02] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:02] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:15] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:15] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:17] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:17] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:42] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:42] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:42] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:51] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:51] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:58] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:56:58] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:06] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:06] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:19] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:19] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:31] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:31] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:34] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:34] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:52] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:52] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:55] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:57:55] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:58:29] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 16:58:29] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:01:54] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:01:54] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:03:30] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:03:30] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:03:47] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:03:47] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:08:37] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:08:38] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:09:07] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:09:08] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:09:12] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:09:12] Aircraft List Error: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "lennukitüüp" does not exist
+LINE 1: ....*, lt.nimetus as tüüp_nimetus FROM lennuk l JOIN lennukitüü...
+                                                             ^
+[2025-04-27 17:09:12] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:10] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:10] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:48] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:48] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:57] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:57] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:58] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:23:58] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:42] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:42] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:51] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:51] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:55] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:56] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:59] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:24:59] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:32:57] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:32:58] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:01] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:01] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:13] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:13] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:16] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:16] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:18] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:18] Aircraft List Error: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "lennukitüüp" does not exist
+LINE 1: ....*, lt.nimetus as tüüp_nimetus FROM lennuk l JOIN lennukitüü...
+                                                             ^
+[2025-04-27 17:36:18] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:23] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:36:23] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:44:17] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:44:17] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:44:36] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:44:36] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column t.töötaja_kood does not exist
+LINE 1: SELECT t.isik_id, t.töötaja_kood, i.eesnimi, i.perenimi FROM...
+                          ^
+[2025-04-27 17:47:08] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column "töötaja_kood" does not exist
+LINE 1: SELECT isik_id, töötaja_kood, eesnimi, perenimi
+                        ^
+[2025-04-27 17:47:09] Data Fetching Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column "töötaja_kood" does not exist
+LINE 1: SELECT isik_id, töötaja_kood, eesnimi, perenimi
+                        ^
+[2025-04-27 18:03:45] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:45] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:45] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:45] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:45] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:45] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:51] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:51] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:51] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:52] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:52] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:03:52] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:06] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:06] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:06] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:06] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:06] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:06] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:11] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:11] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:11] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:11] Database Error: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts. Code: 42883
+[2025-04-27 18:05:11] Aircraft Type List Error: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "lennukitüüp" does not exist
+LINE 1: SELECT lt.*, m.nimetus as tootja_nimi FROM lennukitüüp lt LE...
+                                                   ^
+[2025-04-27 18:05:11] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:11] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:11] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:18] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:18] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:18] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:18] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:18] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:05:18] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:09:34] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:09:34] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:09:34] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:09:35] Failed to fetch dropdown data from fn_lennukitüüp_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_lennukitüüp_read_all() does not exist
+LINE 1: SELECT * FROM fn_lennukitüüp_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:09:35] Failed to fetch dropdown data from fn_töötaja_seisund_liik_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_töötaja_seisund_liik_read_all() does not exist
+LINE 1: SELECT * FROM fn_töötaja_seisund_liik_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:09:35] Failed to fetch dropdown data from fn_ajavöönd_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function fn_ajavöönd_read_all() does not exist
+LINE 1: SELECT * FROM fn_ajavöönd_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:30:42] Database Operation Error (do_register_flight): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Must specify either aircraft type or specific aircraft.
+CONTEXT:  PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 6 at RAISE
+[2025-04-27 18:31:12] Database Operation Error (do_register_flight): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Departure and destination airport cannot be the same (ARN).
+CONTEXT:  PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 4 at RAISE
+[2025-04-27 18:32:29] Database Operation Error (do_create_airport): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Timezone <NULL> not found.
+CONTEXT:  PL/pgSQL function fn_lennujaam_create(character varying,character varying,numeric,numeric,character varying,character varying) line 4 at RAISE
+[2025-04-27 18:33:17] Database Operation Error (do_register_flight): SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "lend_pkey"
+DETAIL:  Key (kood)=(TEST) already exists.
+CONTEXT:  SQL statement "INSERT INTO lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumisaeg, eeldatav_saabumisaeg, seisund_kood, reg_aeg, viimase_muutm_aeg)
+  VALUES (upper(p_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumisaeg, p_eeldatav_saabumisaeg, 'PLANNED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  RETURNING kood"
+PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 13 at SQL statement
+[2025-04-27 18:34:18] Database Operation Error (do_register_flight): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Must specify either aircraft type or specific aircraft.
+CONTEXT:  PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 6 at RAISE
+[2025-04-27 18:44:30] Database Operation Error (do_add_employee): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Employee 4 lacks a valid CAPTAIN license for aircraft type B737 for flight LF202.
+CONTEXT:  PL/pgSQL function fn_op16_lisa_tootaja_lennule(character varying,integer,character varying) line 25 at RAISE
+[2025-04-27 18:44:43] Database Operation Error (do_add_employee): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Employee 2 lacks a valid CAPTAIN license for aircraft type B737 for flight LF202.
+CONTEXT:  PL/pgSQL function fn_op16_lisa_tootaja_lennule(character varying,integer,character varying) line 25 at RAISE
+[2025-04-27 18:57:17] Failed to fetch dropdown data from fn_roll_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_roll_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_roll_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:17] Failed to fetch dropdown data from fn_lennujaama_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennujaama_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennujaama_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:17] Failed to fetch dropdown data from fn_lennuki_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennuki_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennuki_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:17] Failed to fetch dropdown data from fn_tootaja_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_tootaja_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_tootaja_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:39] Failed to fetch dropdown data from fn_roll_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_roll_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_roll_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:39] Failed to fetch dropdown data from fn_lennujaama_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennujaama_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennujaama_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:39] Failed to fetch dropdown data from fn_lennuki_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennuki_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennuki_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:57:39] Failed to fetch dropdown data from fn_tootaja_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_tootaja_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_tootaja_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:22] Failed to fetch dropdown data from fn_roll_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_roll_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_roll_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:22] Failed to fetch dropdown data from fn_lennujaama_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennujaama_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennujaama_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:22] Failed to fetch dropdown data from fn_lennuki_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennuki_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennuki_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:22] Failed to fetch dropdown data from fn_tootaja_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_tootaja_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_tootaja_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:22] Database Operation Error (): Unknown POST action.
+[2025-04-27 18:58:35] Failed to fetch dropdown data from fn_roll_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_roll_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_roll_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:35] Failed to fetch dropdown data from fn_lennujaama_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennujaama_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennujaama_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:35] Failed to fetch dropdown data from fn_lennuki_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_lennuki_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_lennuki_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:35] Failed to fetch dropdown data from fn_tootaja_seisund_read_all: SQLSTATE[42883]: Undefined function: 7 ERROR:  function lennufirma.fn_tootaja_seisund_read_all() does not exist
+LINE 1: SELECT * FROM lennufirma.fn_tootaja_seisund_read_all()
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+[2025-04-27 18:58:35] Database Operation Error (): Unknown POST action.
