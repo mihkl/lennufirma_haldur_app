@@ -32,12 +32,13 @@ if (!isset($list_data)) {
                     <td><?= htmlspecialchars($item['sihtlennujaam_kood'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($item['lennukituup_kood'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($item['lennuk_reg_nr'] ?? 'N/A') ?></td>
-                    <td><?= htmlspecialchars($item['eeldatav_lahkumisaeg'] ?? '') ?></td>
-                    <td><?= htmlspecialchars($item['eeldatav_saabumisaeg'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($item['eeldatav_lahkumis_aeg'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($item['eeldatav_saabumis_aeg'] ?? '') ?></td>
                     <td><?= htmlspecialchars($item['seisund_kood'] ?? '') ?></td>
                     <td>
                         <a href="?action=manage_flights&flight_code=<?= htmlspecialchars($item['kood'] ?? '') ?>">Manage</a> |
-                        <a href="?action=manage_staffing&flight_code=<?= htmlspecialchars($item['kood'] ?? '') ?>">Staffing</a>
+                        <a href="?action=manage_staffing&flight_code=<?= htmlspecialchars($item['kood'] ?? '') ?>">Staffing</a> |
+                        <a href="?action=modify_flight&flight_code=<?= htmlspecialchars($item['kood'] ?? '') ?>">Modify</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

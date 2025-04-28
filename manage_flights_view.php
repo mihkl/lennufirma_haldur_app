@@ -15,8 +15,8 @@ $errors = $formErrors ?? [];
         <strong>Destination:</strong> <?= htmlspecialchars($flight['sihtlennujaam_kood'] ?? 'N/A') ?><br>
         <strong>Aircraft Type:</strong> <?= htmlspecialchars($flight['lennukituup_kood'] ?? 'N/A') ?><br>
         <strong>Aircraft:</strong> <?= htmlspecialchars($flight['lennuk_reg_nr'] ?? 'N/A') ?><br>
-        <strong>Expected Departure:</strong> <?= htmlspecialchars($flight['eeldatav_lahkumisaeg'] ?? 'N/A') ?><br>
-        <strong>Expected Arrival:</strong> <?= htmlspecialchars($flight['eeldatav_saabumisaeg'] ?? 'N/A') ?><br>
+        <strong>Expected Departure:</strong> <?= htmlspecialchars($flight['eeldatav_lahkumis_aeg'] ?? 'N/A') ?><br>
+        <strong>Expected Arrival:</strong> <?= htmlspecialchars($flight['eeldatav_saabumis_aeg'] ?? 'N/A') ?><br>
         <strong>Status:</strong> <?= htmlspecialchars($flight['seisund_kood'] ?? 'N/A') ?>
     </p>
 

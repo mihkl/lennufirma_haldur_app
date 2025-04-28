@@ -27,11 +27,11 @@ if (!isset($pdo, $airports, $aircraft_types, $aircraft)) { die('Required variabl
         <?php endforeach; ?>
     </select>
 
-    <label for="eeldatav_lahkumisaeg">Eeldatav Lahkumisaeg:</label>
-    <input type="datetime-local" id="eeldatav_lahkumisaeg" name="eeldatav_lahkumisaeg" required>
+    <label for="eeldatav_lahkumis_aeg">Eeldatav Lahkumisaeg:</label>
+    <input type="datetime-local" id="eeldatav_lahkumis_aeg" name="eeldatav_lahkumis_aeg" required>
 
-    <label for="eeldatav_saabumisaeg">Eeldatav Saabumisaeg:</label>
-    <input type="datetime-local" id="eeldatav_saabumisaeg" name="eeldatav_saabumisaeg" required>
+    <label for="eeldatav_saabumis_aeg">Eeldatav Saabumisaeg:</label>
+    <input type="datetime-local" id="eeldatav_saabumis_aeg" name="eeldatav_saabumis_aeg" required>
 
     <p>Määra <strong>kas</strong> lennukitüüp <strong>või</strong> konkreetne lennuk:</p>
 

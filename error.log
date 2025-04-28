@@ -382,8 +382,8 @@ CONTEXT:  PL/pgSQL function fn_op1_registreeri_lend(character varying,character 
 CONTEXT:  PL/pgSQL function fn_lennujaam_create(character varying,character varying,numeric,numeric,character varying,character varying) line 4 at RAISE
 [2025-04-27 18:33:17] Database Operation Error (do_register_flight): SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "lend_pkey"
 DETAIL:  Key (kood)=(TEST) already exists.
-CONTEXT:  SQL statement "INSERT INTO lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumisaeg, eeldatav_saabumisaeg, seisund_kood, reg_aeg, viimase_muutm_aeg)
-  VALUES (upper(p_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumisaeg, p_eeldatav_saabumisaeg, 'PLANNED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+CONTEXT:  SQL statement "INSERT INTO lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumis_aeg, eeldatav_saabumis_aeg, seisund_kood, reg_aeg, viimase_muutm_aeg)
+  VALUES (upper(p_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   RETURNING kood"
 PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 13 at SQL statement
 [2025-04-27 18:34:18] Database Operation Error (do_register_flight): SQLSTATE[P0001]: Raise exception: 7 ERROR:  Must specify either aircraft type or specific aircraft.
@@ -458,3 +458,34 @@ LINE 1: SELECT * FROM lennufirma.fn_tootaja_seisund_read_all()
                       ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 [2025-04-27 18:58:35] Database Operation Error (): Unknown POST action.
+[2025-04-28 15:49:52] Database Operation Error (do_register_flight): SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "eeldatav_lahkumis_aeg" of relation "lend" violates not-null constraint
+DETAIL:  Failing row contains (TEST, HEL, ARN, null, ES-DEF, null, null, null, null, PLANNED, null, null, 2025-04-28 18:49:52+03, null).
+CONTEXT:  SQL statement "INSERT INTO lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumis_aeg, eeldatav_saabumis_aeg, seisund_kood)
+  VALUES (upper(p_lennu_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED')
+  RETURNING kood"
+PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 24 at SQL statement | SQLSTATE: 23502 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(131): PDOStatement->execute(Array)
+#1 {main}
+[2025-04-28 15:50:11] Database Operation Error (do_add_employee): SQLSTATE[P0001]: Raise exception: 7 ERROR:  OP16 Error: Employee 2 lacks a valid CAPTAIN license for aircraft type B737 for flight LF202 at the time of departure.
+CONTEXT:  PL/pgSQL function fn_op16_lisa_tootaja_lennule(character varying,integer,character varying) line 18 at RAISE | SQLSTATE: P0001 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(205): PDOStatement->execute(Array)
+#1 {main}
+[2025-04-28 15:52:03] Database Operation Error (do_assign_aircraft): SQLSTATE[P0001]: Raise exception: 7 ERROR:  OP18 Error: Aircraft cannot be assigned to flight LF202 in status CANCELED.
+CONTEXT:  PL/pgSQL function fn_op18_maara_lennuk_lennule(character varying,character varying) line 10 at RAISE | SQLSTATE: P0001 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(198): PDOStatement->execute(Array)
+#1 {main}
+[2025-04-28 16:04:41] Database Operation Error (do_add_employee): SQLSTATE[P0001]: Raise exception: 7 ERROR:  OP16 Error: Employee 2 lacks a valid CAPTAIN license for aircraft type B737 for flight LF202 at the time of departure.
+CONTEXT:  PL/pgSQL function fn_op16_lisa_tootaja_lennule(character varying,integer,character varying) line 18 at RAISE | SQLSTATE: P0001 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(205): PDOStatement->execute(Array)
+#1 {main}
+[2025-04-28 16:20:31] Database Operation Error (do_register_flight): SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "eeldatav_lahkumis_aeg" of relation "lend" violates not-null constraint
+DETAIL:  Failing row contains (TEST, HEL, ARN, null, ES-ABC, null, null, null, null, PLANNED, null, null, 2025-04-28 19:20:32+03, null).
+CONTEXT:  SQL statement "INSERT INTO lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumis_aeg, eeldatav_saabumis_aeg, seisund_kood)
+  VALUES (upper(p_lennu_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED')
+  RETURNING kood"
+PL/pgSQL function fn_op1_registreeri_lend(character varying,character varying,character varying,timestamp with time zone,timestamp with time zone,character varying,character varying) line 24 at SQL statement | SQLSTATE: 23502 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(131): PDOStatement->execute(Array)
+#1 {main}
+[2025-04-28 16:23:35] Database Operation Error (do_add_employee): SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "uq_tootaja_lennus_lend_tootaja"
+DETAIL:  Key (lend_kood, tootaja_isik_id)=(LF202, 2) already exists.
+CONTEXT:  SQL statement "INSERT INTO tootaja_lennus (lend_kood, tootaja_isik_id, roll_kood) VALUES (upper(p_lennu_kood), p_tootaja_isik_id, p_rolli_kood) RETURNING tootaja_lennus_id"
+PL/pgSQL function fn_op16_lisa_tootaja_lennule(character varying,integer,character varying) line 26 at SQL statement | SQLSTATE: 23505 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(205): PDOStatement->execute(Array)
+#1 {main}
+[2025-04-28 16:23:47] Database Operation Error (do_add_employee): SQLSTATE[P0001]: Raise exception: 7 ERROR:  OP16 Error: Employee 2 lacks a valid CAPTAIN license for aircraft type B737 for flight LF202 at the time of departure.
+CONTEXT:  PL/pgSQL function fn_op16_lisa_tootaja_lennule(character varying,integer,character varying) line 18 at RAISE | SQLSTATE: P0001 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(205): PDOStatement->execute(Array)
+#1 {main}
