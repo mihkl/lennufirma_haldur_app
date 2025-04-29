@@ -154,8 +154,8 @@ COMMENT ON TABLE ajavoond IS 'Classifier for timezones.';
 CREATE TABLE lennujaam (
     kood VARCHAR(3) NOT NULL, -- IATA code
     nimi VARCHAR(100) NOT NULL,
-    koordinaadid_laius DECIMAL(9, 6),
-    koordinaadid_pikkus DECIMAL(9, 6),
+    koordinaadid_laius DECIMAL(9, 6) NOT NULL,
+    koordinaadid_pikkus DECIMAL(9, 6) NOT NULL,
     ajavoond_kood VARCHAR(50) NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'OPEN', -- Default initial state
     reg_aeg TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(0), -- Precision 0, NOT NULL
@@ -166,8 +166,8 @@ CREATE TABLE lennujaam (
     CONSTRAINT chk_lennujaam_kood_format CHECK (kood ~ '^[A-Z]{3}$'), -- Basic IATA format check
     CONSTRAINT chk_lennujaam_kood_not_empty CHECK (kood !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lennujaam_nimi_not_empty CHECK (nimi !~ '^[[:space:]]*$'),
-    CONSTRAINT chk_lennujaam_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < '2100-01-01'),
-    CONSTRAINT chk_lennujaam_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= reg_aeg)
+    CONSTRAINT chk_lennujaam_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg <= (NOW()+'1 second'::interval)),
+    CONSTRAINT chk_lennujaam_aeg_order CHECK (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg  <= (NOW()+'1 second'::interval))
 );
 COMMENT ON TABLE lennujaam IS 'Represents an airport.';
 
@@ -272,12 +272,13 @@ CREATE TABLE litsents (
     CONSTRAINT fk_litsents_seisund FOREIGN KEY (seisund_kood) REFERENCES litsentsi_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_litsents_tootaja_tuup_roll UNIQUE (tootaja_isik_id, lennukituup_kood, roll_kood),
     CONSTRAINT chk_litsents_aeg_order CHECK (kehtivuse_lopp > kehtivuse_algus),
-    CONSTRAINT chk_litsents_algus_range CHECK (kehtivuse_algus >= '2000-01-01' AND kehtivuse_algus < '2100-01-01'),
-    CONSTRAINT chk_litsents_lopp_range CHECK (kehtivuse_lopp >= '2000-01-01' AND kehtivuse_lopp < '2100-01-01')
+    CONSTRAINT chk_litsents_algus_range CHECK (kehtivuse_algus >= '2000-01-01' AND kehtivuse_algus < (NOW()+'5 years'::interval)), -- Validity starts from now to 5 years in the future
+    CONSTRAINT chk_litsents_lopp_range CHECK (kehtivuse_lopp >= kehtivuse_algus AND kehtivuse_lopp < (kehtivuse_algus + '15 years'::interval)) -- Validity ends within 5 years from start
 );
 COMMENT ON TABLE litsents IS 'Represents licenses held by employees for specific aircraft types and roles.';
 
-CREATE TABLE lend (
+-- First, create the table without the invalid constraint
+CREATE TABLE lennufirma.lend (
     kood VARCHAR(10) NOT NULL, -- Flight number
     lahtelennujaam_kood VARCHAR(3) NOT NULL,
     sihtlennujaam_kood VARCHAR(3) NOT NULL,
@@ -293,22 +294,54 @@ CREATE TABLE lend (
     reg_aeg TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(0), -- Precision 0, NOT NULL
     viimase_muutm_aeg TIMESTAMPTZ,
     CONSTRAINT pk_lend PRIMARY KEY (kood),
-    CONSTRAINT fk_lend_lahtelennujaam FOREIGN KEY (lahtelennujaam_kood) REFERENCES lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_lend_sihtlennujaam FOREIGN KEY (sihtlennujaam_kood) REFERENCES lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_lend_lennukituup FOREIGN KEY (lennukituup_kood) REFERENCES lennukituup(lennukituup_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_lend_lennuk FOREIGN KEY (lennuk_reg_nr) REFERENCES lennuk(registreerimisnumber) ON UPDATE CASCADE ON DELETE SET NULL, -- Allow aircraft change/removal
-    CONSTRAINT fk_lend_seisund FOREIGN KEY (seisund_kood) REFERENCES lennu_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_lend_lahtelennujaam FOREIGN KEY (lahtelennujaam_kood) REFERENCES lennufirma.lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_lend_sihtlennujaam FOREIGN KEY (sihtlennujaam_kood) REFERENCES lennufirma.lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_lend_lennukituup FOREIGN KEY (lennukituup_kood) REFERENCES lennufirma.lennukituup(lennukituup_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_lend_lennuk FOREIGN KEY (lennuk_reg_nr) REFERENCES lennufirma.lennuk(registreerimisnumber) ON UPDATE CASCADE ON DELETE SET NULL, -- Allow aircraft change/removal
+    CONSTRAINT fk_lend_seisund FOREIGN KEY (seisund_kood) REFERENCES lennufirma.lennu_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_lend_kood_not_empty CHECK (kood !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lend_airports_differ CHECK (sihtlennujaam_kood <> lahtelennujaam_kood),
     CONSTRAINT chk_lend_times_expected_order CHECK (eeldatav_saabumis_aeg > eeldatav_lahkumis_aeg),
     CONSTRAINT chk_lend_times_actual_order CHECK (tegelik_saabumis_aeg IS NULL OR tegelik_lahkumis_aeg IS NULL OR tegelik_saabumis_aeg > tegelik_lahkumis_aeg),
     CONSTRAINT chk_lend_aircraft_xor CHECK ( (lennukituup_kood IS NOT NULL) OR (lennuk_reg_nr IS NOT NULL) ), -- At least one must be specified
     CONSTRAINT chk_lend_cancellation_reason CHECK ( (seisund_kood <> 'CANCELED') OR (tuhistamise_pohjus IS NOT NULL AND tuhistamise_pohjus !~ '^[[:space:]]*$') ), -- Reason required if canceled
-    CONSTRAINT chk_lend_tuhistamise_pohjus_not_empty CHECK (tuhistamise_pohjus IS NULL OR tuhistamise_pohjus !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lend_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < '2100-01-01'),
-    CONSTRAINT chk_lend_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= reg_aeg)
+    CONSTRAINT chk_lend_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= reg_aeg),
+    CONSTRAINT chk_lend_eeldatav_lahkumis_aeg_range CHECK (eeldatav_lahkumis_aeg >= '2000-01-01' AND eeldatav_lahkumis_aeg < '2100-01-01'),
+    CONSTRAINT chk_lend_eeldatav_saabumis_aeg_range CHECK (eeldatav_saabumis_aeg >= '2000-01-01' AND eeldatav_saabumis_aeg < '2100-01-01'),
+    CONSTRAINT chk_lend_eeldatav_lahkumis_aed_eeldatav_saabumis_aeg_vahe CHECK (eeldatav_saabumis_aeg - eeldatav_lahkumis_aeg <= '48 hours'::interval), -- Max 48h difference
+    CONSTRAINT chk_kaugus_linnulennult CHECK (kaugus_linnulennult IS NULL OR (kaugus_linnulennult >= 0 AND kaugus_linnulennult <= 21000)),
+    CONSTRAINT chk_lend_tegelik_lahkumis_aeg_range CHECK (tegelik_lahkumis_aeg IS NULL OR (tegelik_lahkumis_aeg >= '2000-01-01' AND tegelik_lahkumis_aeg < '2100-01-01')),
+    CONSTRAINT chk_lend_tegelik_saabumis_aeg_range CHECK (tegelik_saabumis_aeg IS NULL OR (tegelik_saabumis_aeg >= '2000-01-01' AND tegelik_saabumis_aeg < '2100-01-01')),
+    CONSTRAINT chk_lend_viimase_muutm_aeg_range CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg  <= (NOW()+'1 second'::interval)))
 );
 COMMENT ON TABLE lend IS 'Represents a flight schedule.';
+
+-- Now create a trigger function to enforce the aircraft type match
+CREATE OR REPLACE FUNCTION lennufirma.check_lennuk_type_match()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- If both aircraft and aircraft type are specified
+    IF NEW.lennuk_reg_nr IS NOT NULL AND NEW.lennukituup_kood IS NOT NULL THEN
+        -- Check if the aircraft's type matches the specified type
+        IF NEW.lennukituup_kood <> (
+            SELECT lennukituup_kood 
+            FROM lennufirma.lennuk 
+            WHERE registreerimisnumber = NEW.lennuk_reg_nr
+        ) THEN
+            RAISE EXCEPTION 'Aircraft type mismatch: The specified aircraft % is not of type %', 
+                NEW.lennuk_reg_nr, NEW.lennukituup_kood;
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger
+CREATE TRIGGER trg_lend_check_lennuk_type_match
+BEFORE INSERT OR UPDATE ON lennufirma.lend
+FOR EACH ROW EXECUTE FUNCTION lennufirma.check_lennuk_type_match();
 
 CREATE TABLE tootaja_lennus (
     tootaja_lennus_id SERIAL,
@@ -406,8 +439,66 @@ CREATE TRIGGER trg_broneering_update_viimase_muutm_aeg BEFORE UPDATE ON broneeri
 --                 FLIGHT OPERATION FUNCTIONS (OPx)                         --
 -- ========================================================================== --
 
--- OP1: Registreeri lend
-CREATE OR REPLACE FUNCTION fn_op1_registreeri_lend(
+-- Add a function to calculate the great-circle distance between two airports
+-- using the Haversine formula.
+-- Assumes coordinates are in degrees and returns distance in kilometers.
+CREATE OR REPLACE FUNCTION lennufirma.fn_calculate_distance(
+    p_lahtelennujaam_kood VARCHAR(3),
+    p_sihtlennujaam_kood VARCHAR(3)
+)
+RETURNS DECIMAL(10, 2)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    lat1 DECIMAL(9, 6);
+    lon1 DECIMAL(9, 6);
+    lat2 DECIMAL(9, 6);
+    lon2 DECIMAL(9, 6);
+    R INT := 6371; -- Earth's radius in kilometers
+    dLat FLOAT;
+    dLon FLOAT;
+    a FLOAT;
+    c FLOAT;
+    d DECIMAL(10, 2);
+BEGIN
+    -- Get coordinates for the departure airport
+    SELECT koordinaadid_laius, koordinaadid_pikkus
+    INTO lat1, lon1
+    FROM lennufirma.lennujaam
+    WHERE kood = p_lahtelennujaam_kood;
+
+    -- Get coordinates for the destination airport
+    SELECT koordinaadid_laius, koordinaadid_pikkus
+    INTO lat2, lon2
+    FROM lennufirma.lennujaam
+    WHERE kood = p_sihtlennujaam_kood;
+
+    -- Check if coordinates were found for both airports
+    IF lat1 IS NULL OR lon1 IS NULL OR lat2 IS NULL OR lon2 IS NULL THEN
+        RAISE EXCEPTION 'Coordinates not found for one or both airports (%, %).', p_lahtelennujaam_kood, p_sihtlennujaam_kood;
+    END IF;
+
+    -- Convert degrees to radians
+    dLat = radians(lat2 - lat1);
+    dLon = radians(lon2 - lon1);
+
+    lat1 = radians(lat1);
+    lat2 = radians(lat2);
+
+    -- Apply Haversine formula
+    a = sin(dLat / 2) * sin(dLat / 2) +
+        sin(dLon / 2) * sin(dLon / 2) * cos(lat1) * cos(lat2);
+    c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    d = R * c;
+
+    RETURN ROUND(d, 2); -- Return distance rounded to 2 decimal places
+END;
+$$;
+
+COMMENT ON FUNCTION lennufirma.fn_calculate_distance IS 'Calculates the great-circle distance between two airports using the Haversine formula.';
+
+-- Modify the fn_op1_registreeri_lend function to calculate and set kaugus_linnulennult
+CREATE OR REPLACE FUNCTION lennufirma.fn_op1_registreeri_lend(
   p_lennu_kood VARCHAR(10),
   p_lahtelennujaam_kood VARCHAR(3),
   p_sihtlennujaam_kood VARCHAR(3),
@@ -422,28 +513,61 @@ DECLARE
   v_arr_airport_exists BOOLEAN;
   v_type_exists BOOLEAN;
   v_plane_exists BOOLEAN;
+  v_calculated_distance DECIMAL(10, 2); -- Variable to hold the calculated distance
+  v_actual_aircraft_type VARCHAR(20); -- Variable to hold the assigned aircraft's type
 BEGIN
   IF p_sihtlennujaam_kood = p_lahtelennujaam_kood THEN RAISE EXCEPTION 'OP1 Error: Departure and destination airport cannot be the same (%).', p_lahtelennujaam_kood; END IF;
   IF p_eeldatav_saabumis_aeg <= p_eeldatav_lahkumis_aeg THEN RAISE EXCEPTION 'OP1 Error: Expected arrival time (%) must be later than departure time (%).', p_eeldatav_saabumis_aeg, p_eeldatav_lahkumis_aeg; END IF;
-  IF p_lennukituup_kood IS NULL AND p_lennuk_reg_nr IS NULL THEN RAISE EXCEPTION 'OP1 Error: Must specify either aircraft type or specific aircraft.'; END IF;
-  SELECT EXISTS (SELECT 1 FROM lennujaam lj WHERE lj.kood = p_lahtelennujaam_kood) INTO v_dep_airport_exists;
+
+  -- Check: Must specify either aircraft type or specific aircraft.
+  IF p_lennukituup_kood IS NULL AND p_lennuk_reg_nr IS NULL THEN
+      RAISE EXCEPTION 'OP1 Error: Must specify either aircraft type or specific aircraft.';
+  END IF;
+
+  -- Validate airports
+  SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaam lj WHERE lj.kood = p_lahtelennujaam_kood) INTO v_dep_airport_exists;
   IF NOT v_dep_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Departure airport % not found.', p_lahtelennujaam_kood; END IF;
-  SELECT EXISTS (SELECT 1 FROM lennujaam lj WHERE lj.kood = p_sihtlennujaam_kood) INTO v_arr_airport_exists;
+  SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaam lj WHERE lj.kood = p_sihtlennujaam_kood) INTO v_arr_airport_exists;
   IF NOT v_arr_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Destination airport % not found.', p_sihtlennujaam_kood; END IF;
+
+  -- Validate aircraft type if specified
   IF p_lennukituup_kood IS NOT NULL THEN
-    SELECT EXISTS (SELECT 1 FROM lennukituup lt WHERE lt.lennukituup_kood = p_lennukituup_kood) INTO v_type_exists;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennukituup lt WHERE lt.lennukituup_kood = p_lennukituup_kood) INTO v_type_exists;
     IF NOT v_type_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not found.', p_lennukituup_kood; END IF;
   END IF;
+
+  -- Validate specific aircraft if specified
   IF p_lennuk_reg_nr IS NOT NULL THEN
-     SELECT EXISTS (SELECT 1 FROM lennuk lk WHERE lk.registreerimisnumber = p_lennuk_reg_nr) INTO v_plane_exists;
+     SELECT EXISTS (SELECT 1 FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = p_lennuk_reg_nr) INTO v_plane_exists;
      IF NOT v_plane_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft % not found.', p_lennuk_reg_nr; END IF;
+
+     -- If both type and specific aircraft are provided, check if their types match
+     IF p_lennukituup_kood IS NOT NULL THEN
+         SELECT lk.lennukituup_kood INTO v_actual_aircraft_type
+         FROM lennufirma.lennuk lk
+         WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr);
+
+         IF v_actual_aircraft_type <> p_lennukituup_kood THEN
+             RAISE EXCEPTION 'OP1 Error: Assigned aircraft % type (%) does not match flight required type (%).',
+                             upper(p_lennuk_reg_nr), v_actual_aircraft_type, p_lennukituup_kood;
+         END IF;
+     END IF;
   END IF;
-  INSERT INTO lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumis_aeg, eeldatav_saabumis_aeg, seisund_kood)
-  VALUES (upper(p_lennu_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED')
+
+  -- Calculate the distance using the new function
+  SELECT lennufirma.fn_calculate_distance(p_lahtelennujaam_kood, p_sihtlennujaam_kood) INTO v_calculated_distance;
+
+  -- Insert the new flight, including the calculated distance
+  INSERT INTO lennufirma.lend (kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumis_aeg, eeldatav_saabumis_aeg, seisund_kood, kaugus_linnulennult)
+  VALUES (upper(p_lennu_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED', v_calculated_distance)
   RETURNING kood INTO v_created_kood;
+
   RETURN v_created_kood;
-END; $$;
-COMMENT ON FUNCTION fn_op1_registreeri_lend IS 'OP1: Registers a new flight with status PLANNED. Validates inputs and foreign keys.';
+END;
+$$;
+
+COMMENT ON FUNCTION lennufirma.fn_op1_registreeri_lend IS 'OP1: Registers a new flight with status PLANNED, calculates and sets the great-circle distance. Validates inputs and foreign keys.';
+
 
 -- OP3: Tuhista lend
 CREATE OR REPLACE FUNCTION fn_op3_tuhista_lend(
@@ -871,19 +995,61 @@ DECLARE
   v_kapten_id INT;
   v_parda_id INT;
 BEGIN
-  v_haldur_id := fn_isik_create('Mart', 'Manager', 'manager@lennufirma.ee');
+  v_haldur_id := fn_isik_create('Mart', 'Mets', 'manager@lennufirma.ee');
   PERFORM fn_tootaja_create(v_haldur_id, 'WORKING');
 
-  v_kapten_id := fn_isik_create('Kalle', 'Captain', 'captain@lennufirma.ee');
+  v_kapten_id := fn_isik_create('Kalle', 'Puu', 'captain@lennufirma.ee');
   PERFORM fn_tootaja_create(v_kapten_id, 'WORKING');
 
-  v_parda_id := fn_isik_create('Pille', 'CabinCrew', 'pille@lennufirma.ee');
+  v_parda_id := fn_isik_create('Pille', 'Meri', 'pille@lennufirma.ee');
   PERFORM fn_tootaja_create(v_parda_id, 'WORKING');
 
   INSERT INTO litsents (tootaja_isik_id, lennukituup_kood, roll_kood, kehtivuse_algus, kehtivuse_lopp, seisund_kood)
   VALUES (v_kapten_id, 'A320', 'CAPTAIN', '2023-01-01', '2025-12-31', 'VALID');
 END $$;
 
+DO $$
+DECLARE
+    v_klient1_id INT;
+    v_klient2_id INT;
+BEGIN
+    -- Create Isik records for clients
+    v_klient1_id := fn_isik_create('Mari', 'Maasikas', 'mari.maasikas@example.com', p_isikukood => '49001011234', p_synni_kp => '1990-01-01');
+    v_klient2_id := fn_isik_create('Jaan', 'Tamm', 'jaan.tamm@example.com', p_isikukood => '38502022345', p_synni_kp => '1985-02-02');
+
+    -- Create Klient records linked to Isik
+    INSERT INTO klient (isik_id, seisund_kood) VALUES (v_klient1_id, 'ACTIVE');
+    INSERT INTO klient (isik_id, seisund_kood) VALUES (v_klient2_id, 'ACTIVE');
+
+END $$;
+
 -- Sample Flights
 SELECT * FROM fn_op1_registreeri_lend('LF101', 'TLL', 'HEL', '2025-04-29 18:02:00', '2025-04-29 19:02:00', p_lennukituup_kood => 'A320', p_lennuk_reg_nr => 'ES-ABC');
 SELECT * FROM fn_op1_registreeri_lend('LF202', 'TLL', 'ARN', '2025-04-30 18:02:00', '2025-04-30 19:32:00', p_lennukituup_kood => 'B737', p_lennuk_reg_nr => 'ES-DEF');
+
+-- Sample Bookings (for flight LF101)
+DO $$
+DECLARE
+    v_klient1_id INT;
+    v_klient2_id INT;
+BEGIN
+    -- Find the isik_id for the previously created clients
+    SELECT isik_id INTO v_klient1_id FROM isik WHERE e_meil = 'mari.maasikas@example.com';
+    SELECT isik_id INTO v_klient2_id FROM isik WHERE e_meil = 'jaan.tamm@example.com';
+
+    -- Check if clients were found before inserting bookings
+    IF v_klient1_id IS NOT NULL THEN
+        INSERT INTO broneering (lend_kood, klient_isik_id, seisund_kood, broneerimise_aeg)
+        VALUES ('LF101', v_klient1_id, 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '2 days');
+    ELSE
+        RAISE WARNING 'Client 1 (Mari Maasikas) not found, booking skipped.';
+    END IF;
+
+    IF v_klient2_id IS NOT NULL THEN
+        INSERT INTO broneering (lend_kood, klient_isik_id, seisund_kood, broneerimise_aeg)
+        VALUES ('LF101', v_klient2_id, 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '1 day');
+    ELSE
+        RAISE WARNING 'Client 2 (Jaan Tamm) not found, booking skipped.';
+    END IF;
+
+END $$;

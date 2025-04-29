@@ -35,8 +35,8 @@ if (!isset($pdo, $airports, $aircraft_types, $aircraft)) { die('Required variabl
 
     <p>Määra <strong>kas</strong> lennukitüüp <strong>või</strong> konkreetne lennuk:</p>
 
-    <label for="lennukitüüp_kood">Lennukitüüp (valikuline):</label>
-    <select id="lennukitüüp_kood" name="lennukitüüp_kood">
+    <label for="lennukituup_kood">Lennukitüüp (valikuline):</label>
+    <select id="lennukituup_kood" name="lennukituup_kood">
         <option value="">-- Vali tüüp (kui lennuk pole teada) --</option>
         <?php foreach ($aircraft_types as $code => $name): ?>
             <option value="<?= htmlspecialchars($code) ?>"><?= htmlspecialchars($name) ?> (<?= htmlspecialchars($code) ?>)</option>

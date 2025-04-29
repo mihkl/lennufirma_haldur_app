@@ -20,7 +20,8 @@ $oldInput = $_SESSION['old_input'] ?? [];
 unset($_SESSION['message'], $_SESSION['errors'], $_SESSION['old_input']);
 
 // Determine the action from request, default to 'view_flights'
-$action = $_REQUEST['action'] ?? 'view_flights';
+// Use filter parameters from GET if present for view_flights action
+$action = $_GET['action'] ?? $_POST['action'] ?? 'view_flights';
 
 // --- Data Fetching for Forms & Views ---
 $airports = $aircraft_types = $aircraft = $employees = $employee_roles = [];
@@ -30,14 +31,13 @@ $validation_context = [];
 
 try {
     // --- Fetch Dropdown Data Needed for Flight Operations ---
-    // These functions are assumed to exist based on the simplified SQL script's sample data section
-    $airports = fetchDropdownData($pdo, 'fn_lennujaam_read_all', 'kood', 'nimi'); // Needs function in DB
-    $aircraft_types = fetchDropdownData($pdo, 'fn_lennukituup_read_all', 'lennukituup_kood', 'nimetus'); // Needs function in DB
-    $aircraft = fetchDropdownData($pdo, 'fn_lennuk_read_all', 'registreerimisnumber', 'registreerimisnumber'); // Needs function in DB
-    $employees = fetchDropdownData($pdo, 'fn_tootaja_read_active', 'isik_id', null, function($row) { // Needs function in DB
+    $airports = fetchDropdownData($pdo, 'fn_lennujaam_read_all', 'kood', 'nimi');
+    $aircraft_types = fetchDropdownData($pdo, 'fn_lennukituup_read_all', 'lennukituup_kood', 'nimetus');
+    $aircraft = fetchDropdownData($pdo, 'fn_lennuk_read_all', 'registreerimisnumber', 'registreerimisnumber');
+    $employees = fetchDropdownData($pdo, 'fn_tootaja_read_active', 'isik_id', null, function($row) {
         return trim(($row['eesnimi'] ?? '') . ' ' . ($row['perenimi'] ?? '')) . " (ID: {$row['isik_id']})";
     });
-    $employee_roles = fetchDropdownData($pdo, 'fn_tootaja_roll_read_all', 'roll_kood', 'nimetus'); // Needs function in DB
+    $employee_roles = fetchDropdownData($pdo, 'fn_tootaja_roll_read_all', 'roll_kood', 'nimetus');
 
     // --- Populate Validation Context (Reduced) ---
     $validation_context = [
@@ -46,45 +46,60 @@ try {
         'aircraft_reg_numbers' => array_keys($aircraft),
         'employee_ids' => array_keys($employees),
         'employee_role_codes' => array_keys($employee_roles),
-        // Removed contexts for entities no longer managed via CRUD
     ];
 
     // --- Fetch Data for Specific Flight Record ---
-    $flight_code = $_GET['flight_code'] ?? $_POST['lennu_kood'] ?? null; // Consolidate getting flight code
+    $flight_code = $_GET['flight_code'] ?? $_POST['lennu_kood'] ?? $_POST['kood'] ?? null; // Consolidate getting flight code
 
     // Actions operating on a specific flight
     $flight_actions = ['modify_flight', 'view_flight_details', 'delete_flight', 'manage_flights', 'manage_staffing'];
 
     if ($flight_code !== null && in_array($action, $flight_actions)) {
-        // Fetch flight details
-        $stmt = $pdo->prepare("SELECT * FROM lennufirma.fn_lend_read_by_kood(?)"); // Needs function in DB
+        // Fetch flight details - using the existing function is fine here as it gets one record
+        $stmt = $pdo->prepare("SELECT * FROM lennufirma.fn_lend_read_by_kood(?)");
         $stmt->execute([$flight_code]);
         $crud_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // If managing staffing, fetch current crew
         if ($crud_data && $action === 'manage_staffing') {
-            $stmt_crew = $pdo->prepare("SELECT * FROM lennufirma.fn_lend_read_tootajad(?)"); // Needs function in DB
+            $stmt_crew = $pdo->prepare("SELECT * FROM lennufirma.fn_lend_read_tootajad(?)");
             $stmt_crew->execute([$flight_code]);
             $list_data['crew'] = $stmt_crew->fetchAll(PDO::FETCH_ASSOC);
         }
 
         if (!$crud_data && !in_array($action, ['register_flight'])) { // Check if data expected but not found
              log_error("Flight record not found for action '{$action}' with flight_code '{$flight_code}'");
-             $message = ['type' => 'error', 'text' => 'The requested flight record could not be found.'];
-             $action = 'view_flights'; // Redirect to list view if specific flight not found
-             $flight_code = null; // Clear identifier
+             $_SESSION['message'] = ['type' => 'error', 'text' => 'The requested flight record could not be found.']; // Use session for redirect
+             redirect($_SERVER['PHP_SELF'] . '?action=view_flights'); // Redirect to list view
         }
     }
 
-    // --- Fetch List Data (Only Flights) ---
-    if ($action === 'view_flights' && $flight_code === null) { // Only fetch list if viewing all flights
-         $stmt_list = $pdo->query("SELECT * FROM lennufirma.fn_lend_read_all()"); // Needs function in DB
-         $list_data = $stmt_list ? $stmt_list->fetchAll(PDO::FETCH_ASSOC) : [];
-         if (empty($list_data) && $stmt_list === false) {
-             log_error("Failed to execute query to fetch list for action '{$action}'.");
-             $message = ['type' => 'warning', 'text' => "Could not load {$action} list."];
-         }
+   // --- Fetch List Data (Only Flights) ---
+    // Modified to fetch max passengers and active booking count when viewing the list
+    if ($action === 'view_flights' && $flight_code === null) {
+        // MODIFICATION START: Replace function call with direct query + JOINs + COUNT
+        $sql = "SELECT
+                    l.*, -- Select all columns from lend table
+                    lt.maksimaalne_reisijate_arv,
+                    COUNT(b.broneering_id) FILTER (WHERE b.seisund_kood = 'ACTIVE') AS booked_count -- Count only active bookings
+                FROM lennufirma.lend l
+                LEFT JOIN lennufirma.lennukituup lt ON l.lennukituup_kood = lt.lennukituup_kood
+                LEFT JOIN lennufirma.broneering b ON l.kood = b.lend_kood -- Join with bookings table
+                GROUP BY l.kood, lt.maksimaalne_reisijate_arv -- Group by flight code and max passengers (implicitly groups by all l.* columns due to PRIMARY KEY)
+                ORDER BY l.eeldatav_lahkumis_aeg DESC";
+        $stmt_list = $pdo->query($sql);
+        // MODIFICATION END
+
+        $list_data = $stmt_list ? $stmt_list->fetchAll(PDO::FETCH_ASSOC) : [];
+        if ($stmt_list === false) { // Check if query failed
+            log_error("Failed to execute query to fetch flight list for action '{$action}'. PDO Error: " . implode(" - ", $pdo->errorInfo()));
+            $message = ['type' => 'warning', 'text' => "Could not load flight list."];
+        } elseif (empty($list_data)) {
+             // Optional: Set a message if the list is empty, but not due to an error
+             // $message = ['type' => 'info', 'text' => "No flights found."];
+        }
     }
+
 
 } catch (PDOException $e) {
     log_error("Database Error: " . $e->getMessage() . " Code: " . $e->getCode());
@@ -99,6 +114,17 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $post_action = $_POST['action'] ?? '';
     $post_data = $_POST;
+
+     // Perform Validation Here (Example - you would add more comprehensive validation)
+     $errors = []; // Reset errors for POST request
+     // Example validation (replace with your actual validation logic)
+     /*
+     if ($post_action === 'do_register_flight' && empty($post_data['kood'])) {
+         $errors['kood'] = 'Flight code is required.';
+     }
+     // ... more validation rules ...
+     */
+
 
     // Define redirect URLs for validation errors or success
     // Simplified map focusing on flight actions
@@ -223,7 +249,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) removed from flight '{$post_data['lennu_kood']}'.";
                 } else {
                     // Function raises WARNING on failure but returns false. We catch it here.
-                    // Or it might raise an exception if conditions aren't met.
                     $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) was not found on flight '{$post_data['lennu_kood']}' or could not be removed.";
                     // Redirect with a warning message instead of success
                     $pdo->commit(); // Commit even if warning occurred
@@ -237,7 +262,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             default:
-                throw new Exception('Unknown POST action: ' . htmlspecialchars($post_action));
+                // It's better to check for valid actions earlier, but catchall just in case
+                throw new Exception('Unknown or invalid POST action: ' . htmlspecialchars($post_action));
         }
 
         $pdo->commit();
@@ -250,17 +276,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Provide a user-friendly message, potentially extracting info from PDOException
         $error_text = 'An error occurred during the operation.';
-        if ($e instanceof PDOException && $e->errorInfo[1] == 7) { // Check for PostgreSQL RAISE EXCEPTION (SQLSTATE P0001) or NOTICE (01P01) etc.
-            // Extract the message from the PostgreSQL error string if possible
-            preg_match('/DETAIL:\s*(.*)/', $e->getMessage(), $matches_detail);
-            preg_match('/HINT:\s*(.*)/', $e->getMessage(), $matches_hint);
-            preg_match('/ERROR:\s*(.*)\s*CONTEXT:/s', $e->getMessage(), $matches_error); // More robust extraction
-             $db_message = $matches_error[1] ?? $matches_detail[1] ?? $e->getMessage();
+        if ($e instanceof PDOException && $e->errorInfo[1] == 7) { // Check for PostgreSQL RAISE EXCEPTION/NOTICE etc.
+             // Extract the message from the PostgreSQL error string if possible
+             preg_match('/ERROR:\s*(.*?)\s*(?:DETAIL:|CONTEXT:|$)/s', $e->getMessage(), $matches_error);
+             preg_match('/DETAIL:\s*(.*?)\s*(?:HINT:|CONTEXT:|$)/s', $e->getMessage(), $matches_detail);
+             preg_match('/HINT:\s*(.*?)\s*(?:CONTEXT:|$)/s', $e->getMessage(), $matches_hint);
+
+             $db_message = $matches_error[1] ?? $matches_detail[1] ?? $e->getMessage(); // Prioritize ERROR message
              $db_hint = $matches_hint[1] ?? null;
-            $error_text = "Database error: " . htmlspecialchars(trim($db_message));
-             if ($db_hint) {
-                 $error_text .= " Hint: " . htmlspecialchars(trim($db_hint));
-             }
+             $error_text = "Database error: " . htmlspecialchars(trim(preg_replace('/\s+/', ' ', $db_message))); // Clean whitespace
+              if ($db_hint) {
+                   $error_text .= " Hint: " . htmlspecialchars(trim($db_hint));
+              }
         } else {
             // Generic error for other exception types
             $error_text = 'An unexpected application error occurred: ' . htmlspecialchars($e->getMessage());
@@ -297,50 +324,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <?php
         // Pass necessary variables to the views
-        $formErrors = $errors;
+        $formErrors = $errors; // Use a more specific name in the view context if preferred
         $formOldInput = $oldInput;
         $flightData = $crud_data; // Specific flight data for modify/manage views
-        $flightsList = ($action === 'view_flights') ? $list_data : []; // List of all flights
+
+        // Pass the correct list data to the view
+        // $list_data fetched above now contains flights with max passengers when $action is 'view_flights'
+        $flightsList = ($action === 'view_flights') ? $list_data : []; // Full list for the table view
+
         $crewList = $list_data['crew'] ?? []; // Crew list for staffing view
 
         // Load the appropriate view based on the action
-        // Simplified switch statement
+        $view_path = null;
         switch ($action) {
             case 'register_flight':
-                // Pass necessary dropdown data to the registration form
-                include 'register_flight_form.php'; // Assumes this view exists
+                $view_path = 'register_flight_form.php'; // Standardized path
                 break;
             case 'manage_flights':
-                // Pass flight data and dropdowns for assigning aircraft, delaying, canceling
                 if ($flightData) {
-                    include 'manage_flights_view.php'; // Assumes this view exists
+                     $view_path = 'manage_flights_view.php'; // Standardized path
                 } else {
-                     echo "<p>Select a flight to manage from the <a href='?action=view_flights'>flight list</a>.</p>";
-                     // Or include a search/selection form here
+                    $_SESSION['message'] = ['type' => 'info', 'text' => 'Please select a flight to manage.'];
+                    redirect($_SERVER['PHP_SELF'] . '?action=view_flights');
                 }
                 break;
             case 'manage_staffing':
-                // Pass flight data, crew list, and employee/role dropdowns
                  if ($flightData) {
-                    include 'manage_staffing_view.php'; // Assumes this view exists
+                     $view_path = 'manage_staffing_view.php'; // Standardized path
                  } else {
-                     echo "<p>Select a flight to manage staffing from the <a href='?action=view_flights'>flight list</a>.</p>";
+                     $_SESSION['message'] = ['type' => 'info', 'text' => 'Please select a flight to manage staffing.'];
+                     redirect($_SERVER['PHP_SELF'] . '?action=view_flights');
                  }
                 break;
             case 'modify_flight':
-                // Pass flight data and dropdowns for modification
                  if ($flightData) {
-                    include 'flight_modify_form.php'; // Assumes this view exists
+                     $view_path = 'flight_modify_form.php'; // Standardized path
                  } else {
-                     echo "<p>Select a flight to modify from the <a href='?action=view_flights'>flight list</a>.</p>";
+                    $_SESSION['message'] = ['type' => 'info', 'text' => 'Please select a flight to modify.'];
+                    redirect($_SERVER['PHP_SELF'] . '?action=view_flights');
                  }
                 break;
             case 'view_flights':
             default: // Default action
-                // Pass the list of flights to the table view
-                include 'view_flights_table.php'; // Assumes this view exists
+                 $view_path = 'view_flights_table.php'; // Standardized path
                 break;
         }
+
+        // Include the view file if path is set
+        if ($view_path && file_exists(__DIR__ . '/' . $view_path)) {
+            // Make variables available to the included view file
+            // (already done above by defining them in this scope)
+            include __DIR__ . '/' . $view_path;
+        } elseif($view_path) {
+            echo "<div class='message error'>Error: View file not found: " . htmlspecialchars($view_path) . "</div>";
+            log_error("View file not found: " . $view_path);
+        } elseif(!isset($_SESSION['message'])) { // Avoid showing duplicate errors if redirect message exists
+             // This condition might occur if $flightData was expected but not found, and redirect didn't happen
+             echo "<div class='message error'>An error occurred determining the correct view.</div>";
+             // Optionally redirect to a default page
+             // redirect($_SERVER['PHP_SELF'] . '?action=view_flights');
+        }
+
         ?>
     </div>
 </body>

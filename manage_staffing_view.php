@@ -35,7 +35,7 @@ $errors = $formErrors ?? [];
                     <tr>
                         <td><?= htmlspecialchars($member['tootaja_isik_id'] ?? '') ?></td>
                         <td><?= htmlspecialchars(($member['eesnimi'] ?? '') . ' ' . ($member['perenimi'] ?? '')) ?></td>
-                        <td><?= htmlspecialchars($member['rolli_kood'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($member['roll_kood'] ?? '') ?></td>
                         <td>
                             <form method="post" action="">
                                 <input type="hidden" name="action" value="do_remove_employee">
