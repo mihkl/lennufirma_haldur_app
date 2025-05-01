@@ -3,6 +3,31 @@ session_start(); // Start session FIRST
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/functions.php'; // Assumed to contain fetchDropdownData, redirect, log_error, etc.
 
+// Check login status from SESSION
+$is_logged_in = $_SESSION['is_logged_in'] ?? false;
+
+// Process client-side login submission
+if (isset($_POST['login_submit'])) {
+    $_SESSION['is_logged_in'] = true;
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// Handle logout
+if (isset($_GET['logout'])) {
+    $_SESSION['is_logged_in'] = false;
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// If not logged in, show login form and exit
+if (!$is_logged_in) {
+    // Display login page
+    include_login_form();
+    exit;
+}
+
+// Continue with the original application logic if logged in
 $pdo = getDbConnection();
 
 if (!$pdo) {
@@ -296,6 +321,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect($redirect_on_error, ['type' => 'error', 'text' => $error_text], null, $post_data);
     }
 }
+
+// Function to display login form
+function include_login_form() {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Airline System Login</title>
+        <link rel="stylesheet" href="style.css">
+        <style>
+            .login-container {
+                max-width: 400px;
+                margin: 100px auto;
+                padding: 20px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            .login-field {
+                margin-bottom: 15px;
+            }
+            .login-field label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            .login-field input {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+            .login-error {
+                color: red;
+                margin-bottom: 15px;
+                display: none;
+            }
+            .login-button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            .login-button:hover {
+                background-color: #45a049;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <h2>Airline Management System</h2>
+            <div id="login-error" class="login-error">Invalid username or password</div>
+            <form id="login-form" method="post">
+                <div class="login-field">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="login-field">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" name="login_submit" class="login-button">Login</button>
+                <!-- Hidden field for client-side auth success -->
+                <input type="hidden" id="auth-success" name="login_submit" value="1">
+            </form>
+        </div>
+
+        <script>
+            // Client-side login validation
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const errorDiv = document.getElementById('login-error');
+                
+                // Check against hardcoded credentials
+                if (username === 'haldur@email.com' && password === 'haldur') {
+                    // Success - submit the form with hidden field
+                    this.submit();
+                } else {
+                    // Show error message
+                    errorDiv.style.display = 'block';
+                }
+            });
+        </script>
+    </body>
+    </html>
+    <?php
+}
 ?>
 
 <!DOCTYPE html>
@@ -307,6 +427,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="style.css"> </head>
 <body>
     <h1>Airline Flight Management</h1>
+
+    <!-- Show logout link if logged in -->
+    <div class="user-info">
+        Logged in as: haldur | <a href="?logout=1">Logout</a>
+    </div>
 
     <?php if ($message): ?>
         <div class="message <?= htmlspecialchars($message['type']) ?>">

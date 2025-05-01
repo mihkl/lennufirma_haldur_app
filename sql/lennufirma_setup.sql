@@ -208,15 +208,15 @@ COMMENT ON TABLE lennuk IS 'Represents a specific aircraft instance.';
 CREATE TABLE isik (
     isik_id SERIAL,
     isikukood VARCHAR(20) NULL, -- Made explicitly NULLABLE, UNIQUE constraint enforces non-null uniqueness if value exists
-    eesnimi VARCHAR(50) NOT NULL, -- Made NOT NULL
-    perenimi VARCHAR(50) NOT NULL, -- Made NOT NULL
+    eesnimi VARCHAR(50),
+    perenimi VARCHAR(50), 
     synni_kp DATE NULL,
     elukoht VARCHAR(500) NULL, -- Changed TEXT to VARCHAR(500)
     e_meil VARCHAR(254) NOT NULL,
-    parool VARCHAR(255) NULL, -- Password hash
     on_aktiivne BOOLEAN NOT NULL DEFAULT TRUE, -- Made NOT NULL
     reg_aeg TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(0), -- Precision 0, NOT NULL
     viimase_muutm_aeg TIMESTAMPTZ,
+    kasutaja_konto_id SERIAL, -- Foreign key to kasutaja_konto table
     CONSTRAINT pk_isik PRIMARY KEY (isik_id),
     CONSTRAINT uq_isik_e_meil UNIQUE (e_meil),
     CONSTRAINT uq_isik_isikukood UNIQUE (isikukood), -- Keep unique, but allow NULL
@@ -226,34 +226,55 @@ CREATE TABLE isik (
     CONSTRAINT chk_isik_elukoht_not_empty CHECK (elukoht IS NULL OR elukoht !~ '^[[:space:]]*$'),
     CONSTRAINT chk_isik_email_not_empty CHECK (e_meil !~ '^[[:space:]]*$'),
     CONSTRAINT chk_isik_email_format CHECK (e_meil LIKE '_%@_%.__%'), -- Basic email format
-    CONSTRAINT chk_isik_parool_not_empty CHECK (parool IS NULL OR parool !~ '^[[:space:]]*$'),
     CONSTRAINT chk_isik_synni_kp_range CHECK (synni_kp IS NULL OR (synni_kp >= '1900-01-01' AND synni_kp < CURRENT_DATE)),
     CONSTRAINT chk_isik_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < '2100-01-01'),
-    CONSTRAINT chk_isik_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= reg_aeg)
+    CONSTRAINT chk_isik_aeg_order CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg  <= (NOW()+'1 second'::interval))),
+    CONSTRAINT chk_eesnimi_perenimi_both_not_null CHECK (eesnimi IS NOT NULL OR perenimi IS NOT NULL)-- At least one must be provided
 );
 COMMENT ON TABLE isik IS 'Represents a person (can be employee or client).';
 
+CREATE TABLE kuupaevade_vahemiku_maandumiskeeld (
+    alguse_aeg TIMESTAMPTZ NOT NULL,
+    lopu_aeg TIMESTAMPTZ NOT NULL,
+    lennujaam_kood VARCHAR(3) NOT NULL,
+    CONSTRAINT pk_kuupaevade_vahemiku_maandumiskeeld PRIMARY KEY (alguse_aeg, lopu_aeg, lennujaam_kood),
+    CONSTRAINT fk_kuupaevade_vahemiku_maandumiskeeld_lennujaam FOREIGN KEY (lennujaam_kood) REFERENCES lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE lennujaama_vastuvoetavad_lennukituubid (
+    lennujaam_kood VARCHAR(3) NOT NULL,
+    lennukituup_kood VARCHAR(20) NOT NULL,
+    CONSTRAINT pk_lennujaama_vastuvoetavad_lennukituubid PRIMARY KEY (lennujaam_kood, lennukituup_kood),
+    CONSTRAINT fk_lennujaama_vastuvoetavad_lennukituubid_lennujaam FOREIGN KEY (lennujaam_kood) REFERENCES lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_lennujaama_vastuvoetavad_lennukituubid_lennukituup FOREIGN KEY (lennukituup_kood) REFERENCES lennukituup(lennukituup_kood) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+COMMENT ON TABLE kuupaevade_vahemiku_maandumiskeeld IS 'Represents a period during which landings are prohibited at a specific airport.';
+
+CREATE TABLE kasutaja_konto (
+    on_aktiivne BOOLEAN NOT NULL DEFAULT TRUE, -- Made NOT NULL
+    parool VARCHAR(255) NOT NULL,
+    isik_id SERIAL,
+    kasutakonto_id SERIAL NOT NULL,
+    CONSTRAINT pk_kasutaja_konto PRIMARY KEY (kasutakonto_id),
+    CONSTRAINT fk_kasutaja_konto_isik FOREIGN KEY (isik_id) REFERENCES isik(isik_id) ON UPDATE CASCADE ON DELETE CASCADE -- Cascade updates/deletes from isik
+);
+
 CREATE TABLE tootaja (
     isik_id INT NOT NULL,
-    tootaja_kood VARCHAR(20) NULL, -- Made explicitly NULLABLE
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'WORKING', -- Default initial state
     CONSTRAINT pk_tootaja PRIMARY KEY (isik_id),
     CONSTRAINT fk_tootaja_isik FOREIGN KEY (isik_id) REFERENCES isik(isik_id) ON UPDATE CASCADE ON DELETE CASCADE, -- Cascade updates/deletes from isik
-    CONSTRAINT fk_tootaja_seisund FOREIGN KEY (seisund_kood) REFERENCES tootaja_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT uq_tootaja_kood UNIQUE (tootaja_kood), -- Keep unique, but allow NULL
-    CONSTRAINT chk_tootaja_kood_not_empty CHECK (tootaja_kood IS NULL OR tootaja_kood !~ '^[[:space:]]*$')
+    CONSTRAINT fk_tootaja_seisund FOREIGN KEY (seisund_kood) REFERENCES tootaja_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 COMMENT ON TABLE tootaja IS 'Represents an employee, linked to an isik.';
 
 CREATE TABLE klient (
     isik_id INT NOT NULL,
-    kliendi_kood VARCHAR(20) NULL, -- Made explicitly NULLABLE
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- Default initial state
     CONSTRAINT pk_klient PRIMARY KEY (isik_id),
     CONSTRAINT fk_klient_isik FOREIGN KEY (isik_id) REFERENCES isik(isik_id) ON UPDATE CASCADE ON DELETE CASCADE, -- Cascade updates/deletes from isik
-    CONSTRAINT fk_klient_seisund FOREIGN KEY (seisund_kood) REFERENCES kliendi_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT uq_klient_kood UNIQUE (kliendi_kood), -- Keep unique, but allow NULL
-    CONSTRAINT chk_klient_kood_not_empty CHECK (kliendi_kood IS NULL OR kliendi_kood !~ '^[[:space:]]*$')
+    CONSTRAINT fk_klient_seisund FOREIGN KEY (seisund_kood) REFERENCES kliendi_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 COMMENT ON TABLE klient IS 'Represents a client/customer, linked to an isik.';
 
@@ -360,12 +381,14 @@ CREATE TABLE hooldus (
     hooldus_id SERIAL,
     lennuk_reg_nr VARCHAR(10) NOT NULL,
     alguse_aeg TIMESTAMPTZ NOT NULL,
-    lopu_aeg TIMESTAMPTZ NULL,
+    lopu_aeg TIMESTAMPTZ NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'PLANNED', -- Default initial state
     kirjeldus VARCHAR(1000) NULL, -- Changed TEXT to VARCHAR(1000)
+    lennujaam_kood VARCHAR(3) NOT NULL,
     CONSTRAINT pk_hooldus PRIMARY KEY (hooldus_id),
     CONSTRAINT fk_hooldus_lennuk FOREIGN KEY (lennuk_reg_nr) REFERENCES lennuk(registreerimisnumber) ON UPDATE CASCADE ON DELETE CASCADE, -- Cascade aircraft deletion
     CONSTRAINT fk_hooldus_seisund FOREIGN KEY (seisund_kood) REFERENCES hoolduse_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_hooldus_lennujaam FOREIGN KEY (lennujaam_kood) REFERENCES lennujaam(kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_hooldus_lennuk_algaeg UNIQUE (lennuk_reg_nr, alguse_aeg), -- Natural key
     CONSTRAINT chk_hooldus_aeg_order CHECK (lopu_aeg IS NULL OR lopu_aeg > alguse_aeg),
     CONSTRAINT chk_hooldus_kirjeldus_not_empty CHECK (kirjeldus IS NULL OR kirjeldus !~ '^[[:space:]]*$'),
@@ -381,13 +404,15 @@ CREATE TABLE broneering (
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- Default initial state
     broneerimise_aeg TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(0), -- Precision 0, NOT NULL
     viimase_muutm_aeg TIMESTAMPTZ,
+    maksumus DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- Default to 0.00
     CONSTRAINT pk_broneering PRIMARY KEY (broneering_id),
     CONSTRAINT fk_broneering_lend FOREIGN KEY (lend_kood) REFERENCES lend(kood) ON UPDATE CASCADE ON DELETE RESTRICT, -- Prevent deleting flight with bookings
     CONSTRAINT fk_broneering_klient FOREIGN KEY (klient_isik_id) REFERENCES klient(isik_id) ON UPDATE CASCADE ON DELETE CASCADE, -- Cascade client deletion
     CONSTRAINT fk_broneering_seisund FOREIGN KEY (seisund_kood) REFERENCES broneeringu_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_broneering_lend_klient UNIQUE (lend_kood, klient_isik_id), -- Natural key: client can book a flight only once
-    CONSTRAINT chk_broneering_reg_aeg_range CHECK (broneerimise_aeg >= '2000-01-01' AND broneerimise_aeg < '2100-01-01'),
-    CONSTRAINT chk_broneering_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= broneerimise_aeg)
+    CONSTRAINT chk_broneering_reg_aeg_range CHECK (broneerimise_aeg >= '2000-01-01' AND broneerimise_aeg < (NOW()+'1 second'::interval)),
+    CONSTRAINT chk_broneering_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= broneerimise_aeg),
+    CONSTRAINT chk_broneering_viimase_muutm_aeg_range CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= broneerimise_aeg AND viimase_muutm_aeg < (NOW()+'1 second'::interval)))
 );
 COMMENT ON TABLE broneering IS 'Represents a client booking on a specific flight.';
 
@@ -515,6 +540,8 @@ DECLARE
   v_plane_exists BOOLEAN;
   v_calculated_distance DECIMAL(10, 2); -- Variable to hold the calculated distance
   v_actual_aircraft_type VARCHAR(20); -- Variable to hold the assigned aircraft's type
+  v_aircraft_type_supported_departure BOOLEAN; -- Variable to check if the aircraft type is supported at the departure airport
+  v_aircraft_type_supported_arrival BOOLEAN; -- Variable to check if the aircraft type is supported at the arrival airport
 BEGIN
   IF p_sihtlennujaam_kood = p_lahtelennujaam_kood THEN RAISE EXCEPTION 'OP1 Error: Departure and destination airport cannot be the same (%).', p_lahtelennujaam_kood; END IF;
   IF p_eeldatav_saabumis_aeg <= p_eeldatav_lahkumis_aeg THEN RAISE EXCEPTION 'OP1 Error: Expected arrival time (%) must be later than departure time (%).', p_eeldatav_saabumis_aeg, p_eeldatav_lahkumis_aeg; END IF;
@@ -534,6 +561,16 @@ BEGIN
   IF p_lennukituup_kood IS NOT NULL THEN
     SELECT EXISTS (SELECT 1 FROM lennufirma.lennukituup lt WHERE lt.lennukituup_kood = p_lennukituup_kood) INTO v_type_exists;
     IF NOT v_type_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not found.', p_lennukituup_kood; END IF;
+  END IF;
+
+  IF p_lennukituup_kood IS NOT NULL THEN
+    -- Check if the aircraft type is supported at the departure airport
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_lahtelennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_departure;
+    IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at departure airport %.', p_lennukituup_kood, p_lahtelennujaam_kood; END IF;
+
+    -- Check if the aircraft type is supported at the arrival airport
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_sihtlennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_arrival;
+    IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at destination airport %.', p_lennukituup_kood, p_sihtlennujaam_kood; END IF;
   END IF;
 
   -- Validate specific aircraft if specified
@@ -655,7 +692,18 @@ BEGIN
     v_final_siht_kood VARCHAR(3) := COALESCE(p_uus_sihtlennujaam_kood, v_lend.sihtlennujaam_kood);
     v_final_tuup_kood VARCHAR(20) := COALESCE(p_uus_lennukituup_kood, v_lend.lennukituup_kood);
     v_final_reg_nr VARCHAR(10) := COALESCE(p_uus_lennuk_reg_nr, v_lend.lennuk_reg_nr);
+    v_aircraft_type_supported_departure BOOLEAN;
+    v_aircraft_type_supported_arrival BOOLEAN;
   BEGIN
+    IF p_uus_lennukituup_kood IS NOT NULL THEN
+    -- Check if the aircraft type is supported at the departure airport
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_uus_lahtelennujaam_kood AND llvt.lennukituup_kood = p_uus_lennukituup_kood) INTO v_aircraft_type_supported_departure;
+    IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at departure airport %.', p_uus_lennukituup_kood, p_uus_lahtelennujaam_kood; END IF;
+
+    -- Check if the aircraft type is supported at the arrival airport
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_uus_sihtlennujaam_kood AND llvt.lennukituup_kood = p_uus_lennukituup_kood) INTO v_aircraft_type_supported_arrival;
+    IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at destination airport %.', p_uus_lennukituup_kood, p_uus_sihtlennujaam_kood; END IF;
+    END IF;
     IF v_final_saabumis_aeg <= v_final_lahkumis_aeg THEN RAISE EXCEPTION 'OP14 Error: Final arrival time (%) must be later than final departure time (%).', v_final_saabumis_aeg, v_final_lahkumis_aeg; END IF;
     IF v_final_siht_kood = v_final_lahke_kood THEN RAISE EXCEPTION 'OP14 Error: Final departure and destination airport cannot be the same (%).', v_final_lahke_kood; END IF;
     IF v_final_tuup_kood IS NULL AND v_final_reg_nr IS NULL THEN RAISE EXCEPTION 'OP14 Error: Final state must have either aircraft type or specific aircraft assigned.'; END IF;
@@ -760,19 +808,19 @@ COMMENT ON FUNCTION fn_op17_eemalda_tootaja_lennult IS 'OP17: Removes an employe
 -- ========================================================================== --
 
 -- Isik Create (Needed for Sample Data)
-CREATE OR REPLACE FUNCTION fn_isik_create(p_eesnimi VARCHAR, p_perenimi VARCHAR, p_email VARCHAR, p_isikukood VARCHAR DEFAULT NULL, p_synni_kp DATE DEFAULT NULL, p_elukoht TEXT DEFAULT NULL, p_parool VARCHAR DEFAULT NULL, p_on_aktiivne BOOLEAN DEFAULT TRUE) RETURNS INT LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION fn_isik_create(p_eesnimi VARCHAR, p_perenimi VARCHAR, p_email VARCHAR, p_isikukood VARCHAR DEFAULT NULL, p_synni_kp DATE DEFAULT NULL, p_elukoht TEXT DEFAULT NULL, p_on_aktiivne BOOLEAN DEFAULT TRUE) RETURNS INT LANGUAGE plpgsql AS $$
 DECLARE v_isik_id INT;
 BEGIN
-  INSERT INTO isik (eesnimi, perenimi, e_meil, isikukood, synni_kp, elukoht, parool, on_aktiivne)
-  VALUES (p_eesnimi, p_perenimi, p_email, p_isikukood, p_synni_kp, p_elukoht, p_parool, p_on_aktiivne) RETURNING isik_id INTO v_isik_id;
+  INSERT INTO isik (eesnimi, perenimi, e_meil, isikukood, synni_kp, elukoht, on_aktiivne)
+  VALUES (p_eesnimi, p_perenimi, p_email, p_isikukood, p_synni_kp, p_elukoht, p_on_aktiivne) RETURNING isik_id INTO v_isik_id;
   RETURN v_isik_id;
 END; $$;
 
-CREATE OR REPLACE FUNCTION fn_tootaja_create(p_isik_id INT, p_seisund VARCHAR(20), p_tootaja_kood VARCHAR(20) DEFAULT NULL) RETURNS INT LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION fn_tootaja_create(p_isik_id INT, p_seisund VARCHAR(20)) RETURNS INT LANGUAGE plpgsql AS $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM isik WHERE isik_id = p_isik_id) THEN RAISE EXCEPTION 'Person with ID % not found.', p_isik_id; END IF;
   IF NOT EXISTS (SELECT 1 FROM tootaja_seisund_liik WHERE seisund_kood = p_seisund) THEN RAISE EXCEPTION 'Employee status % not found.', p_seisund; END IF;
-  INSERT INTO tootaja (isik_id, seisund_kood, tootaja_kood) VALUES (p_isik_id, p_seisund, p_tootaja_kood);
+  INSERT INTO tootaja (isik_id, seisund_kood) VALUES (p_isik_id, p_seisund);
   RETURN p_isik_id;
 END; $$;
 
@@ -829,12 +877,11 @@ CREATE OR REPLACE FUNCTION lennufirma.fn_tootaja_read_active()
 RETURNS TABLE (
     isik_id INT,
     eesnimi VARCHAR,
-    perenimi VARCHAR,
-    tootaja_kood VARCHAR
+    perenimi VARCHAR
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT i.isik_id, i.eesnimi, i.perenimi, t.tootaja_kood
+    SELECT i.isik_id, i.eesnimi, i.perenimi
     FROM lennufirma.isik i
     JOIN lennufirma.tootaja t ON i.isik_id = t.isik_id
     WHERE t.seisund_kood = 'WORKING' AND i.on_aktiivne = TRUE
@@ -1023,6 +1070,12 @@ BEGIN
 
 END $$;
 
+INSERT INTO lennujaama_vastuvoetavad_lennukituubid (lennujaam_kood, lennukituup_kood) VALUES
+('TLL', 'A320'),
+('TLL', 'B737'),
+('HEL', 'A320'),
+('ARN', 'B737');
+
 -- Sample Flights
 SELECT * FROM fn_op1_registreeri_lend('LF101', 'TLL', 'HEL', '2025-04-29 18:02:00', '2025-04-29 19:02:00', p_lennukituup_kood => 'A320', p_lennuk_reg_nr => 'ES-ABC');
 SELECT * FROM fn_op1_registreeri_lend('LF202', 'TLL', 'ARN', '2025-04-30 18:02:00', '2025-04-30 19:32:00', p_lennukituup_kood => 'B737', p_lennuk_reg_nr => 'ES-DEF');
@@ -1039,15 +1092,15 @@ BEGIN
 
     -- Check if clients were found before inserting bookings
     IF v_klient1_id IS NOT NULL THEN
-        INSERT INTO broneering (lend_kood, klient_isik_id, seisund_kood, broneerimise_aeg)
-        VALUES ('LF101', v_klient1_id, 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '2 days');
+        INSERT INTO broneering (lend_kood, klient_isik_id, seisund_kood, broneerimise_aeg, maksumus)
+        VALUES ('LF101', v_klient1_id, 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '2 days', 100.75);
     ELSE
         RAISE WARNING 'Client 1 (Mari Maasikas) not found, booking skipped.';
     END IF;
 
     IF v_klient2_id IS NOT NULL THEN
-        INSERT INTO broneering (lend_kood, klient_isik_id, seisund_kood, broneerimise_aeg)
-        VALUES ('LF101', v_klient2_id, 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '1 day');
+        INSERT INTO broneering (lend_kood, klient_isik_id, seisund_kood, broneerimise_aeg, maksumus)
+        VALUES ('LF101', v_klient2_id, 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '1 day', 150.50);
     ELSE
         RAISE WARNING 'Client 2 (Jaan Tamm) not found, booking skipped.';
     END IF;

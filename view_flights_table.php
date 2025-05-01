@@ -115,7 +115,7 @@ if (!empty($filter_type)) {
     }
 </style>
 
-<h2>Flights</h2>
+<h2>Lennud</h2>
 
 <form method="GET" action="">
     <?php // Preserve existing GET parameters like 'action' ?>
@@ -130,9 +130,9 @@ if (!empty($filter_type)) {
     <?php endif; ?>
 
 
-    <label for="filter_status">Filter by Status:</label>
+    <label for="filter_status">Filtreeri staatuse järgi:</label>
     <select name="filter_status" id="filter_status">
-        <option value="">-- All Statuses --</option>
+        <option value="">-- Kõik staatused --</option>
         <?php foreach ($statuses as $status): ?>
             <?php if (!empty($status)): // Avoid empty status options ?>
             <option value="<?= htmlspecialchars($status) ?>" <?= ($filter_status === $status) ? 'selected' : '' ?>>
@@ -142,9 +142,9 @@ if (!empty($filter_type)) {
         <?php endforeach; ?>
     </select>
 
-    <label for="filter_type">Filter by Aircraft Type:</label>
+    <label for="filter_type">Filtreeri lennukitüübi järgi:</label>
     <select name="filter_type" id="filter_type">
-        <option value="">-- All Types --</option>
+        <option value="">-- Kõik tüübid --</option>
         <?php foreach ($types as $type): ?>
             <?php if (!empty($type)): // Avoid empty type options ?>
             <option value="<?= htmlspecialchars($type) ?>" <?= ($filter_type === $type) ? 'selected' : '' ?>>
@@ -154,7 +154,7 @@ if (!empty($filter_type)) {
         <?php endforeach; ?>
     </select>
 
-    <button type="submit">Filter</button>
+    <button type="submit">Filtreeri</button>
     <?php // Ensure Clear Filters link keeps the action parameter ?>
     <a href="?action=<?= htmlspecialchars($_GET['action'] ?? 'view_flights') ?>">Clear Filters</a>
 </form>
@@ -162,21 +162,21 @@ if (!empty($filter_type)) {
 
 
 <?php if (empty($filtered_data)): ?>
-    <p>No flights found<?= (!empty($filter_status) || !empty($filter_type)) ? ' matching your criteria' : '' ?>.</p>
+    <p>Ühtegi lendi ei leitud<?= (!empty($filter_status) || !empty($filter_type)) ? ' mis vastaks sinu filtreeringutele' : '' ?>.</p>
 <?php else: ?>
     <table>
         <thead>
             <tr>
-                <th>Code</th>
-                <th>Departure</th>
-                <th>Destination</th>
-                <th>Type</th>
-                <th>Distance (km)</th>
-                <th>Bookings</th>
-                <th>Aircraft Registration</th>
-                <th>Expected Departure</th>
-                <th>Expected Arrival</th>
-                <th>Status</th> <th>Actions</th>
+                <th>Kood</th>
+                <th>Lähtekoht</th>
+                <th>Sihtkoht</th>
+                <th>Tüüp</th>
+                <th>Vahemaa (km)</th>
+                <th>Broneeringud</th>
+                <th>Lennuki registratsioon</th>
+                <th>Eeldatav lahkumisaeg</th>
+                <th>Eeldatav saabumisaeg</th>
+                <th>Staatus</th> <th>Tegevused</th>
             </tr>
         </thead>
         <tbody>
@@ -209,9 +209,9 @@ if (!empty($filter_type)) {
                         <?php endif; ?>
                     </td>
                     <td>
-                        <a href="?action=manage_flights&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Manage</a> |
-                        <a href="?action=manage_staffing&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Staffing</a> |
-                        <a href="?action=modify_flight&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Modify</a>
+                        <a href="?action=manage_flights&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Halda</a> |
+                        <a href="?action=manage_staffing&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Meeskond</a> |
+                        <a href="?action=modify_flight&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Muuda</a>
                     </td>
                 </tr>
             <?php endforeach; ?>
