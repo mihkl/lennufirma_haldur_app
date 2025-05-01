@@ -39,7 +39,7 @@ $errors = $formErrors ?? [];
                         <td>
                             <form method="post" action="">
                                 <input type="hidden" name="action" value="do_remove_employee">
-                                <input type="hidden" name="lennu_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
+                                <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
                                 <input type="hidden" name="tootaja_isik_id" value="<?= htmlspecialchars($member['tootaja_isik_id'] ?? '') ?>">
                                 <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
                                 <button type="submit" onclick="return confirm('Remove this employee?')">Remove</button>
@@ -64,8 +64,8 @@ $errors = $formErrors ?? [];
     <h3>Add Employee to Crew</h3>
     <form method="post" action="">
         <input type="hidden" name="action" value="do_add_employee">
-        <input type="hidden" name="lennu_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
-        <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
+        <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
+        <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
 
         <div>
             <label for="tootaja_isik_id">Employee:</label>

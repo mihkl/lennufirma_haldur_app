@@ -11,6 +11,9 @@ $activeTab = $_GET['tab'] ?? 'details';
 function isActiveTab($tabName, $activeTab) {
     return $tabName === $activeTab ? 'active' : '';
 }
+
+// Check if flight is canceled
+$isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
 ?>
 
 <style>
@@ -104,7 +107,7 @@ function isActiveTab($tabName, $activeTab) {
     }
 </style>
 
-<h2>Manage Flight: <?= htmlspecialchars($flight['kood'] ?? 'N/A') ?></h2>
+<h2>Manage Flight: <?= htmlspecialchars($flight['lend_kood'] ?? 'N/A') ?></h2>
 
 <?php if (empty($flight)): ?>
     <p>Flight not found.</p>
@@ -122,7 +125,9 @@ function isActiveTab($tabName, $activeTab) {
     <div class="tabs">
         <button class="tab-button <?= isActiveTab('details', $activeTab) ?>" onclick="openTab(event, 'details')">Details</button>
         <button class="tab-button <?= isActiveTab('cancel', $activeTab) ?>" onclick="openTab(event, 'cancel')">Cancel Flight</button>
+        <?php if (!$isFlightCanceled): ?>
         <button class="tab-button <?= isActiveTab('delay', $activeTab) ?>" onclick="openTab(event, 'delay')">Delay Flight</button>
+        <?php endif; ?>
         <button class="tab-button <?= isActiveTab('assign', $activeTab) ?>" onclick="openTab(event, 'assign')">Assign Aircraft</button>
         <button class="tab-button <?= isActiveTab('delete', $activeTab) ?>" onclick="openTab(event, 'delete')">Delete Flight</button>
     </div>
@@ -137,7 +142,7 @@ function isActiveTab($tabName, $activeTab) {
             <strong>Expected Departure:</strong> <?= htmlspecialchars($flight['eeldatav_lahkumis_aeg'] ?? 'N/A') ?><br>
             <strong>Expected Arrival:</strong> <?= htmlspecialchars($flight['eeldatav_saabumis_aeg'] ?? 'N/A') ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($flight['seisund_kood'] ?? 'N/A') ?>
-            <?php if (($flight['seisund_kood'] ?? '') === 'CANCELED' && !empty($flight['tuhistamise_pohjus'] ?? '')): ?>
+            <?php if ($isFlightCanceled && !empty($flight['tuhistamise_pohjus'] ?? '')): ?>
                 <br><strong>Cancellation Reason:</strong> <?= htmlspecialchars($flight['tuhistamise_pohjus']) ?>
             <?php endif; ?>
         </p>
@@ -145,15 +150,14 @@ function isActiveTab($tabName, $activeTab) {
 
     <div id="cancel" class="tab-content <?= isActiveTab('cancel', $activeTab) ?>">
         <h3>Cancel Flight</h3>
-        <?php if (($flight['seisund_kood'] ?? '') === 'CANCELED'): ?>
+        <?php if ($isFlightCanceled): ?>
             <p>This flight is already canceled.</p>
         <?php else: ?>
             <form method="post" action="">
                 <input type="hidden" name="action" value="do_cancel_flight">
-                <input type="hidden" name="lennu_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
-                <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
-                 <input type="hidden" name="redirect_tab" value="cancel">
-
+                <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
+                <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
+                <input type="hidden" name="redirect_tab" value="cancel">
 
                 <div>
                     <label for="pohjus">Reason:</label>
@@ -168,26 +172,27 @@ function isActiveTab($tabName, $activeTab) {
         <?php endif; ?>
     </div>
 
+    <?php if (!$isFlightCanceled): ?>
     <div id="delay" class="tab-content <?= isActiveTab('delay', $activeTab) ?>">
         <h3>Delay Flight</h3>
         <form method="post" action="">
             <input type="hidden" name="action" value="do_delay_flight">
-            <input type="hidden" name="lennu_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
-            <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
-             <input type="hidden" name="redirect_tab" value="delay">
+            <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
+            <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
+            <input type="hidden" name="redirect_tab" value="delay">
 
             <div>
-                <label for="uus_lahkumisaeg">New Departure Time:</label>
-                <input type="datetime-local" id="uus_lahkumi_saeg" name="uus_lahkumis_aeg" value="<?= htmlspecialchars($oldInput['uus_lahkumis_aeg'] ?? '') ?>" required>
-                <?php if (isset($errors['uus_lahkumisaeg'])): ?>
+                <label for="uus_lahkumis_aeg">New Departure Time:</label>
+                <input type="datetime-local" id="uus_lahkumis_aeg" name="uus_lahkumis_aeg" value="<?= htmlspecialchars($oldInput['uus_lahkumis_aeg'] ?? '') ?>" required>
+                <?php if (isset($errors['uus_lahkumis_aeg'])): ?>
                     <span class="error"><?= htmlspecialchars($errors['uus_lahkumis_aeg']) ?></span>
                 <?php endif; ?>
             </div>
 
             <div>
-                <label for="uus_saabumisaeg">New Arrival Time:</label>
+                <label for="uus_saabumis_aeg">New Arrival Time:</label>
                 <input type="datetime-local" id="uus_saabumis_aeg" name="uus_saabumis_aeg" value="<?= htmlspecialchars($oldInput['uus_saabumis_aeg'] ?? '') ?>" required>
-                <?php if (isset($errors['uus_saabumisaeg'])): ?>
+                <?php if (isset($errors['uus_saabumis_aeg'])): ?>
                     <span class="error"><?= htmlspecialchars($errors['uus_saabumis_aeg']) ?></span>
                 <?php endif; ?>
             </div>
@@ -195,6 +200,7 @@ function isActiveTab($tabName, $activeTab) {
             <button type="submit">Delay Flight</button>
         </form>
     </div>
+    <?php endif; ?>
 
     <div id="assign" class="tab-content <?= isActiveTab('assign', $activeTab) ?>">
         <h3>Assign Aircraft</h3>
@@ -203,9 +209,9 @@ function isActiveTab($tabName, $activeTab) {
         <?php else: ?>
             <form method="post" action="">
                 <input type="hidden" name="action" value="do_assign_aircraft">
-                <input type="hidden" name="lennu_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
-                <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
-                 <input type="hidden" name="redirect_tab" value="assign">
+                <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
+                <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
+                <input type="hidden" name="redirect_tab" value="assign">
 
                 <div>
                     <label for="lennuk_reg_nr">Aircraft:</label>
@@ -231,9 +237,9 @@ function isActiveTab($tabName, $activeTab) {
         <h3>Delete Flight</h3>
         <form method="post" action="">
             <input type="hidden" name="action" value="do_delete_flight">
-            <input type="hidden" name="lennu_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
-            <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
-             <input type="hidden" name="redirect_tab" value="delete">
+            <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
+            <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
+            <input type="hidden" name="redirect_tab" value="delete">
 
             <button type="submit" onclick="return confirm('Are you sure you want to delete this flight?')">Delete Flight</button>
         </form>
@@ -262,23 +268,29 @@ function isActiveTab($tabName, $activeTab) {
             evt.currentTarget.className += " active";
 
             // Update the URL hash to remember the active tab (optional but good for usability)
-            history.replaceState(null, null, '?action=manage_flights&flight_code=<?= urlencode($flight['kood'] ?? '') ?>&tab=' + tabName);
+            history.replaceState(null, null, '?action=manage_flights&flight_code=<?= urlencode($flight['lend_kood'] ?? '') ?>&tab=' + tabName);
         }
 
         // Automatically open the default or specified tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const activeTab = urlParams.get('tab') || 'details'; // Default to 'details'
-            const initialTabButton = document.querySelector(`.tab-button[onclick*="'${activeTab}'"]`);
-            if (initialTabButton) {
-                 // Simulate a click on the button to activate the tab
-                initialTabButton.click();
+            
+            // Check if the active tab exists, especially important for 'delay' which may be hidden
+            if (document.getElementById(activeTab)) {
+                const initialTabButton = document.querySelector(`.tab-button[onclick*="'${activeTab}'"]`);
+                if (initialTabButton) {
+                    // Simulate a click on the button to activate the tab
+                    initialTabButton.click();
+                } else {
+                    // If the specified tab doesn't exist, activate the default 'details' tab
+                    document.querySelector('.tab-button[onclick*="\'details\'"]').click();
+                }
             } else {
-                // If the specified tab doesn't exist, activate the default 'details' tab
+                // If the tab content doesn't exist, default to 'details'
                 document.querySelector('.tab-button[onclick*="\'details\'"]').click();
             }
         });
-
     </script>
 
 <?php endif; ?>

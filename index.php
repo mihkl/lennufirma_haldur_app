@@ -56,7 +56,7 @@ $validation_context = [];
 
 try {
     // --- Fetch Dropdown Data Needed for Flight Operations ---
-    $airports = fetchDropdownData($pdo, 'fn_lennujaam_read_all', 'kood', 'nimi');
+    $airports = fetchDropdownData($pdo, 'fn_lennujaam_read_all', 'lennujaam_kood', 'nimi');
     $aircraft_types = fetchDropdownData($pdo, 'fn_lennukituup_read_all', 'lennukituup_kood', 'nimetus');
     $aircraft = fetchDropdownData($pdo, 'fn_lennuk_read_all', 'registreerimisnumber', 'registreerimisnumber');
     $employees = fetchDropdownData($pdo, 'fn_tootaja_read_active', 'isik_id', null, function($row) {
@@ -74,7 +74,7 @@ try {
     ];
 
     // --- Fetch Data for Specific Flight Record ---
-    $flight_code = $_GET['flight_code'] ?? $_POST['lennu_kood'] ?? $_POST['kood'] ?? null; // Consolidate getting flight code
+    $flight_code = $_GET['flight_code'] ?? $_POST['lend_kood'] ?? $_POST['lend_kood'] ?? null; // Consolidate getting flight code
 
     // Actions operating on a specific flight
     $flight_actions = ['modify_flight', 'view_flight_details', 'delete_flight', 'manage_flights', 'manage_staffing'];
@@ -109,8 +109,8 @@ try {
                     COUNT(b.broneering_id) FILTER (WHERE b.seisund_kood = 'ACTIVE') AS booked_count -- Count only active bookings
                 FROM lennufirma.lend l
                 LEFT JOIN lennufirma.lennukituup lt ON l.lennukituup_kood = lt.lennukituup_kood
-                LEFT JOIN lennufirma.broneering b ON l.kood = b.lend_kood -- Join with bookings table
-                GROUP BY l.kood, lt.maksimaalne_reisijate_arv -- Group by flight code and max passengers (implicitly groups by all l.* columns due to PRIMARY KEY)
+                LEFT JOIN lennufirma.broneering b ON l.lend_kood = b.lend_kood -- Join with bookings table
+                GROUP BY l.lend_kood, lt.maksimaalne_reisijate_arv -- Group by flight code and max passengers (implicitly groups by all l.* columns due to PRIMARY KEY)
                 ORDER BY l.eeldatav_lahkumis_aeg DESC";
         $stmt_list = $pdo->query($sql);
         // MODIFICATION END
@@ -155,13 +155,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Simplified map focusing on flight actions
     $action_map = [
         'do_register_flight' => '?action=register_flight',
-        'do_modify_flight' => '?action=modify_flight&flight_code=' . urlencode($post_data['kood'] ?? ''), // 'kood' is used in modify form
-        'do_cancel_flight' => '?action=manage_flights&flight_code=' . urlencode($post_data['lennu_kood'] ?? ''),
-        'do_delay_flight' => '?action=manage_flights&flight_code=' . urlencode($post_data['lennu_kood'] ?? ''),
+        'do_modify_flight' => '?action=modify_flight&flight_code=' . urlencode($post_data['lend_kood'] ?? ''), // 'kood' is used in modify form
+        'do_cancel_flight' => '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood'] ?? ''),
+        'do_delay_flight' => '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood'] ?? ''),
         'do_delete_flight' => '?action=view_flights', // Redirect to list after delete
-        'do_assign_aircraft' => '?action=manage_flights&flight_code=' . urlencode($post_data['lennu_kood'] ?? ''),
-        'do_add_employee' => '?action=manage_staffing&flight_code=' . urlencode($post_data['lennu_kood'] ?? ''),
-        'do_remove_employee' => '?action=manage_staffing&flight_code=' . urlencode($post_data['lennu_kood'] ?? ''),
+        'do_assign_aircraft' => '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood'] ?? ''),
+        'do_add_employee' => '?action=manage_staffing&flight_code=' . urlencode($post_data['lend_kood'] ?? ''),
+        'do_remove_employee' => '?action=manage_staffing&flight_code=' . urlencode($post_data['lend_kood'] ?? ''),
     ];
     $redirect_on_error = $_SERVER['PHP_SELF'] . ($action_map[$post_action] ?? '?action=view_flights');
     $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=view_flights'; // Default success redirect
@@ -180,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'do_register_flight': // OP1
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op1_registreeri_lend(?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
-                    $post_data['kood'],
+                    $post_data['lend_kood'],
                     $post_data['lahtelennujaam_kood'],
                     $post_data['sihtlennujaam_kood'],
                     $post_data['eeldatav_lahkumis_aeg'], // Ensure name matches form and DB function
@@ -195,32 +195,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'do_cancel_flight': // OP3
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op3_tuhista_lend(?, ?)");
-                $stmt->execute([$post_data['lennu_kood'], $post_data['pohjus']]);
-                $success_message = "Flight '{$post_data['lennu_kood']}' canceled.";
-                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lennu_kood']);
+                $stmt->execute([$post_data['lend_kood'], $post_data['pohjus']]);
+                $success_message = "Flight '{$post_data['lend_kood']}' canceled.";
+                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood']);
                 break;
 
             case 'do_delay_flight': // OP4
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op4_maara_hilinenuks(?, ?, ?)");
                 $stmt->execute([
-                    $post_data['lennu_kood'],
+                    $post_data['lend_kood'],
                     $post_data['uus_lahkumis_aeg'], // Ensure name matches form and DB function
                     $post_data['uus_saabumis_aeg']  // Ensure name matches form and DB function
                 ]);
-                $success_message = "Flight '{$post_data['lennu_kood']}' marked as delayed.";
-                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lennu_kood']);
+                $success_message = "Flight '{$post_data['lend_kood']}' marked as delayed.";
+                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood']);
                 break;
 
             case 'do_delete_flight': // OP13
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op13_kustuta_lend(?)");
-                $stmt->execute([$post_data['lennu_kood']]);
+                $stmt->execute([$post_data['lend_kood']]);
                 $deleted = $stmt->fetchColumn();
                 if ($deleted) {
-                    $success_message = "Flight '{$post_data['lennu_kood']}' deleted.";
+                    $success_message = "Flight '{$post_data['lend_kood']}' deleted.";
                 } else {
                     // The function raises an exception on failure, so this might not be reached
                     // unless the function is changed to return false instead of raising error.
-                    throw new Exception("Flight '{$post_data['lennu_kood']}' could not be deleted (conditions not met or already deleted).");
+                    throw new Exception("Flight '{$post_data['lend_kood']}' could not be deleted (conditions not met or already deleted).");
                 }
                 $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=view_flights';
                 break;
@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'do_modify_flight': // OP14
                 $stmt = $pdo->prepare("SELECT * FROM lennufirma.fn_op14_muuda_lendu(?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
-                    $post_data['kood'], // Original flight code
+                    $post_data['lend_kood'], // Original flight code
                     empty($post_data['uus_lahkumis_aeg']) ? null : $post_data['uus_lahkumis_aeg'],
                     empty($post_data['uus_saabumis_aeg']) ? null : $post_data['uus_saabumis_aeg'],
                     empty($post_data['uus_lennukituup_kood']) ? null : $post_data['uus_lennukituup_kood'],
@@ -238,52 +238,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 $updated_flight = $stmt->fetch(); // Fetch the returned updated record
                 if (!$updated_flight) {
-                     throw new Exception("Failed to update flight '{$post_data['kood']}'. Function did not return data.");
+                     throw new Exception("Failed to update flight '{$post_data['lend_kood']}'. Function did not return data.");
                 }
-                $success_message = "Flight '{$post_data['kood']}' data updated.";
-                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['kood']);
+                $success_message = "Flight '{$post_data['lend_kood']}' data updated.";
+                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood']);
                 break;
 
             case 'do_assign_aircraft': // OP18
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op18_maara_lennuk_lennule(?, ?)");
-                $stmt->execute([$post_data['lennu_kood'], $post_data['lennuk_reg_nr']]);
-                $success_message = "Aircraft '{$post_data['lennuk_reg_nr']}' assigned to flight '{$post_data['lennu_kood']}'.";
-                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lennu_kood']);
+                $stmt->execute([$post_data['lend_kood'], $post_data['lennuk_reg_nr']]);
+                $success_message = "Aircraft '{$post_data['lennuk_reg_nr']}' assigned to flight '{$post_data['lend_kood']}'.";
+                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_flights&flight_code=' . urlencode($post_data['lend_kood']);
                 break;
 
             case 'do_add_employee': // OP16
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op16_lisa_tootaja_lennule(?, ?, ?)");
                 $stmt->execute([
-                    $post_data['lennu_kood'],
+                    $post_data['lend_kood'],
                     $post_data['tootaja_isik_id'],
                     $post_data['rolli_kood']
                 ]);
                 $assignment_id = $stmt->fetchColumn();
                 if ($assignment_id === false) { // Check if function failed (might raise exception instead)
-                     throw new Exception("Failed to add employee to flight '{$post_data['lennu_kood']}'.");
+                     throw new Exception("Failed to add employee to flight '{$post_data['lend_kood']}'.");
                 }
-                $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) added to flight '{$post_data['lennu_kood']}' in role '{$post_data['rolli_kood']}'.";
-                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($post_data['lennu_kood']);
+                $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) added to flight '{$post_data['lend_kood']}' in role '{$post_data['rolli_kood']}'.";
+                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($post_data['lend_kood']);
                 break;
 
             case 'do_remove_employee': // OP17
                 $stmt = $pdo->prepare("SELECT lennufirma.fn_op17_eemalda_tootaja_lennult(?, ?)");
-                $stmt->execute([$post_data['lennu_kood'], $post_data['tootaja_isik_id']]);
+                $stmt->execute([$post_data['lend_kood'], $post_data['tootaja_isik_id']]);
                 $removed = $stmt->fetchColumn();
                 if ($removed) {
-                    $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) removed from flight '{$post_data['lennu_kood']}'.";
+                    $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) removed from flight '{$post_data['lend_kood']}'.";
                 } else {
                     // Function raises WARNING on failure but returns false. We catch it here.
-                    $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) was not found on flight '{$post_data['lennu_kood']}' or could not be removed.";
+                    $success_message = "Employee (ID: {$post_data['tootaja_isik_id']}) was not found on flight '{$post_data['lend_kood']}' or could not be removed.";
                     // Redirect with a warning message instead of success
                     $pdo->commit(); // Commit even if warning occurred
                     redirect(
-                        $_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($post_data['lennu_kood']),
+                        $_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($post_data['lend_kood']),
                         ['type' => 'warning', 'text' => $success_message]
                     );
                     exit; // Stop further processing
                 }
-                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($post_data['lennu_kood']);
+                $redirect_on_success = $_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($post_data['lend_kood']);
                 break;
 
             default:
@@ -361,7 +361,7 @@ function include_login_form() {
                 display: none;
             }
             .login-button {
-                background-color: #4CAF50;
+                background-color: #0EA5E9;
                 color: white;
                 padding: 10px 15px;
                 border: none;
@@ -370,7 +370,7 @@ function include_login_form() {
                 font-size: 16px;
             }
             .login-button:hover {
-                background-color: #45a049;
+                background-color: #0B85D1;
             }
         </style>
     </head>

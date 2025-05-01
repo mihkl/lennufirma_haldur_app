@@ -45,7 +45,7 @@ $ac_reg_value = $oldInput['uus_lennuk_reg_nr'] ?? $current_ac_reg;
 
 ?>
 
-<h2>Modify Flight: <?= htmlspecialchars($flight['kood'] ?? 'N/A') ?></h2>
+<h2>Modify Flight: <?= htmlspecialchars($flight['lend_kood'] ?? 'N/A') ?></h2>
 
 <?php if (empty($flight)): ?>
     <p>Flight not found.</p>
@@ -61,7 +61,7 @@ $ac_reg_value = $oldInput['uus_lennuk_reg_nr'] ?? $current_ac_reg;
     <?php endif; ?>
 
     <form method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>"> <input type="hidden" name="action" value="do_modify_flight">
-        <input type="hidden" name="kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
+        <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
         <div>
             <label for="uus_lahtelennujaam_kood">Departure Airport:</label> <select id="uus_lahtelennujaam_kood" name="uus_lahtelennujaam_kood">
                 <?php foreach ($airports as $code => $name): ?>

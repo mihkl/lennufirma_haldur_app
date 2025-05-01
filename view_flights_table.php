@@ -9,6 +9,7 @@ if (!isset($flightsList)) {
 $filtered_data = $flightsList;
 $filter_status = $_GET['filter_status'] ?? '';
 $filter_type = $_GET['filter_type'] ?? '';
+$filter_code = $_GET['filter_code'] ?? '';
 
 // Get unique statuses and types for dropdowns from the *original* list ($flightsList)
 $statuses = [];
@@ -28,6 +29,13 @@ if (!empty($flightsList)) { // Check if $flightsList is not empty before using a
     }
 }
 
+// Apply Flight Code Filter
+if (!empty($filter_code)) {
+    $filtered_data = array_filter($filtered_data, function($item) use ($filter_code) {
+        // Case-insensitive partial match (contains)
+        return stripos(($item['lend_kood'] ?? ''), $filter_code) !== false;
+    });
+}
 
 // Apply Status Filter
 if (!empty($filter_status)) {
@@ -74,6 +82,21 @@ if (!empty($filter_type)) {
     }
     label, select, input[type="text"], button {
         margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+    .filter-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .filter-actions {
+        margin-top: 10px;
     }
 
     /* Styles for the custom tooltip */
@@ -120,7 +143,7 @@ if (!empty($filter_type)) {
 <form method="GET" action="">
     <?php // Preserve existing GET parameters like 'action' ?>
     <?php foreach ($_GET as $key => $value): ?>
-        <?php if ($key !== 'filter_status' && $key !== 'filter_type'): ?>
+        <?php if ($key !== 'filter_status' && $key !== 'filter_type' && $key !== 'filter_code'): ?>
             <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
         <?php endif; ?>
     <?php endforeach; ?>
@@ -129,60 +152,72 @@ if (!empty($filter_type)) {
            <input type="hidden" name="action" value="view_flights">
     <?php endif; ?>
 
+    <div class="filter-container">
+        <div class="filter-item">
+            <label for="filter_code">Code:</label>
+            <input type="text" name="filter_code" id="filter_code" value="<?= htmlspecialchars($filter_code) ?>" placeholder="Enter flight code">
+        </div>
+        
+        <div class="filter-item">
+            <label for="filter_status">Status:</label>
+            <select name="filter_status" id="filter_status">
+                <option value="">-- All statuses --</option>
+                <?php foreach ($statuses as $status): ?>
+                    <?php if (!empty($status)): // Avoid empty status options ?>
+                    <option value="<?= htmlspecialchars($status) ?>" <?= ($filter_status === $status) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($status) ?>
+                    </option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
 
-    <label for="filter_status">Filtreeri staatuse järgi:</label>
-    <select name="filter_status" id="filter_status">
-        <option value="">-- Kõik staatused --</option>
-        <?php foreach ($statuses as $status): ?>
-            <?php if (!empty($status)): // Avoid empty status options ?>
-            <option value="<?= htmlspecialchars($status) ?>" <?= ($filter_status === $status) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($status) ?>
-            </option>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </select>
+        <div class="filter-item">
+            <label for="filter_type">Type:</label>
+            <select name="filter_type" id="filter_type">
+                <option value="">-- All types --</option>
+                <?php foreach ($types as $type): ?>
+                    <?php if (!empty($type)): // Avoid empty type options ?>
+                    <option value="<?= htmlspecialchars($type) ?>" <?= ($filter_type === $type) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($type) ?>
+                    </option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
 
-    <label for="filter_type">Filtreeri lennukitüübi järgi:</label>
-    <select name="filter_type" id="filter_type">
-        <option value="">-- Kõik tüübid --</option>
-        <?php foreach ($types as $type): ?>
-            <?php if (!empty($type)): // Avoid empty type options ?>
-            <option value="<?= htmlspecialchars($type) ?>" <?= ($filter_type === $type) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($type) ?>
-            </option>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </select>
-
-    <button type="submit">Filtreeri</button>
-    <?php // Ensure Clear Filters link keeps the action parameter ?>
-    <a href="?action=<?= htmlspecialchars($_GET['action'] ?? 'view_flights') ?>">Clear Filters</a>
+    <div class="filter-actions">
+        <button type="submit">Filter</button>
+        <?php // Ensure Clear Filters link keeps the action parameter ?>
+        <a href="?action=<?= htmlspecialchars($_GET['action'] ?? 'view_flights') ?>">Clear Filters</a>
+    </div>
 </form>
 <hr>
 
 
 <?php if (empty($filtered_data)): ?>
-    <p>Ühtegi lendi ei leitud<?= (!empty($filter_status) || !empty($filter_type)) ? ' mis vastaks sinu filtreeringutele' : '' ?>.</p>
+    <p>No flights were found<?= (!empty($filter_status) || !empty($filter_type) || !empty($filter_code)) ? ' matching your criteria' : '' ?>.</p>
 <?php else: ?>
     <table>
         <thead>
             <tr>
-                <th>Kood</th>
-                <th>Lähtekoht</th>
-                <th>Sihtkoht</th>
-                <th>Tüüp</th>
-                <th>Vahemaa (km)</th>
-                <th>Broneeringud</th>
-                <th>Lennuki registratsioon</th>
-                <th>Eeldatav lahkumisaeg</th>
-                <th>Eeldatav saabumisaeg</th>
-                <th>Staatus</th> <th>Tegevused</th>
+                <th>Code</th>
+                <th>Departure</th>
+                <th>Arrival</th>
+                <th>Type</th>
+                <th>Distance (km)</th>
+                <th>Bookings</th>
+                <th>Aircraft registration</th>
+                <th>Expected departure</th>
+                <th>Expected arrival</th>
+                <th>Status</th> <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($filtered_data as $item): ?>
                 <tr>
-                    <td><?= htmlspecialchars($item['kood'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($item['lend_kood'] ?? '') ?></td>
                     <td><?= htmlspecialchars($item['lahtelennujaam_kood'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($item['sihtlennujaam_kood'] ?? 'N/A') ?></td>
                     <td><?= htmlspecialchars($item['lennukituup_kood'] ?? 'N/A') ?></td>
@@ -209,9 +244,9 @@ if (!empty($filter_type)) {
                         <?php endif; ?>
                     </td>
                     <td>
-                        <a href="?action=manage_flights&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Halda</a> |
-                        <a href="?action=manage_staffing&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Meeskond</a> |
-                        <a href="?action=modify_flight&flight_code=<?= urlencode($item['kood'] ?? '') ?>">Muuda</a>
+                        <a href="?action=manage_flights&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Manage</a> |
+                        <a href="?action=manage_staffing&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Staffing</a> |
+                        <a href="?action=modify_flight&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Modify</a>
                     </td>
                 </tr>
             <?php endforeach; ?>
