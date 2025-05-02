@@ -27,11 +27,11 @@ if (!isset($pdo, $airports, $aircraft_types, $aircraft)) { die('Required variabl
         <?php endforeach; ?>
     </select>
 
-    <label for="eeldatav_lahkumis_aeg">Expected departure:</label>
-    <input type="datetime-local" id="eeldatav_lahkumis_aeg" name="eeldatav_lahkumis_aeg" required>
+    <label for="eeldatav_lahkumis_aeg">Expected departure (UTC):</label>
+    <input type="datetime-local" id="eeldatav_lahkumis_aeg" name="eeldatav_lahkumis_aeg" required placeholder="YYYY-MM-DD HH:MM">
 
-    <label for="eeldatav_saabumis_aeg">Expected arrival:</label>
-    <input type="datetime-local" id="eeldatav_saabumis_aeg" name="eeldatav_saabumis_aeg" required>
+    <label for="eeldatav_saabumis_aeg">Expected arrival (UTC):</label>
+    <input type="datetime-local" id="eeldatav_saabumis_aeg" name="eeldatav_saabumis_aeg" required placeholder="YYYY-MM-DD HH:MM">
 
     <p>Choose <strong>either</strong> aircraft type <strong>or</strong> specific aircraft:</p>
 
@@ -53,3 +53,46 @@ if (!isset($pdo, $airports, $aircraft_types, $aircraft)) { die('Required variabl
 
     <button type="submit">Register flight</button>
 </form>
+
+<!-- In includes/header.php or your main layout file -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/en.js"></script>
+
+<!-- In flight_form.php or includes/footer.php -->
+<script>
+    // Wait for the document to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Configuration options
+        const flatpickrConfig = {
+            enableTime: true,       // Enable time selection
+            dateFormat: "Y-m-d H:i", // The format displayed *and submitted*
+            time_24hr: true,        // Use 24-hour format
+            // --- Crucial for UTC ---
+            timeZone: 'UTC',        // Treat selected time as UTC (Flatpickr internal)
+            // Note: Flatpickr itself doesn't force the *picker UI* to UTC,
+            // but it helps format the output string correctly assuming UTC input.
+            // You still need to label clearly.
+            // --- Optional: Estonian Locale ---
+            locale: "en",           
+            // --- Optional: Set default time if needed ---
+            // defaultDate: new Date(), // Example: Set to current time
+            // --- Optional: Min/Max dates ---
+            // minDate: "today",
+        };
+
+        // Initialize for departure time
+        flatpickr("#eeldatav_lahkumis_aeg", {
+            ...flatpickrConfig // Spread the common config
+            // Add specific options for departure if needed
+        });
+
+        // Initialize for arrival time
+        flatpickr("#eeldatav_saabumis_aeg", {
+            ...flatpickrConfig // Spread the common config
+            // Add specific options for arrival if needed
+        });
+
+    });
+</script>

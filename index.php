@@ -80,15 +80,36 @@ try {
     $flight_actions = ['modify_flight', 'view_flight_details', 'delete_flight', 'manage_flights', 'manage_staffing'];
 
     if ($flight_code !== null && in_array($action, $flight_actions)) {
-        // Fetch flight details - using the existing function is fine here as it gets one record
-        $stmt = $pdo->prepare("SELECT * FROM lennufirma.fn_lend_read_by_kood(?)");
-        $stmt->execute([$flight_code]);
+        // *** MODIFICATION START: Fetch single flight details AND booking count ***
+        $sql_single_flight = "SELECT
+                                l.*, -- Select all columns from lend table
+                                lt.maksimaalne_reisijate_arv,
+                                COUNT(b.broneering_id) FILTER (WHERE b.seisund_kood = 'ACTIVE') AS booked_count -- Count only active bookings
+                            FROM lennufirma.lend l
+                            -- Join to get max passengers (might be on lennuk or lennukituup)
+                            LEFT JOIN lennufirma.lennuk ln ON l.lennuk_reg_nr = ln.registreerimisnumber
+                            LEFT JOIN lennufirma.lennukituup lt ON COALESCE(ln.lennukituup_kood, l.lennukituup_kood) = lt.lennukituup_kood
+                            -- Join with bookings table to count
+                            LEFT JOIN lennufirma.broneering b ON l.lend_kood = b.lend_kood
+                            WHERE l.lend_kood = :flight_code -- Filter by the specific flight code
+                            GROUP BY l.lend_kood, lt.maksimaalne_reisijate_arv -- Group by flight code and max passengers
+                            "; // Grouping by PK implicitly groups by all columns of l
+        $stmt = $pdo->prepare($sql_single_flight);
+        $stmt->bindParam(':flight_code', $flight_code);
+        $stmt->execute();
         $crud_data = $stmt->fetch(PDO::FETCH_ASSOC);
+        // *** MODIFICATION END ***
 
-        // If managing staffing, fetch current crew
+        // If managing staffing, fetch current crew (keep this logic)
         if ($crud_data && $action === 'manage_staffing') {
-            $stmt_crew = $pdo->prepare("SELECT * FROM lennufirma.fn_lend_read_tootajad(?)");
-            $stmt_crew->execute([$flight_code]);
+            // Assuming fn_lend_read_tootajad exists or use a direct query:
+             $stmt_crew = $pdo->prepare("SELECT i.isik_id, i.eesnimi, i.perenimi, tr.nimetus as rolli_nimetus
+                                        FROM lennufirma.tootaja_lennus tl
+                                        JOIN lennufirma.isik i ON tl.tootaja_isik_id = i.isik_id
+                                        JOIN lennufirma.tootaja_roll tr ON tl.rolli_kood = tr.roll_kood
+                                        WHERE tl.lend_kood = :flight_code");
+            $stmt_crew->bindParam(':flight_code', $flight_code);
+            $stmt_crew->execute();
             $list_data['crew'] = $stmt_crew->fetchAll(PDO::FETCH_ASSOC);
         }
 
@@ -100,28 +121,24 @@ try {
     }
 
    // --- Fetch List Data (Only Flights) ---
-    // Modified to fetch max passengers and active booking count when viewing the list
+    // Keep the existing logic for fetching the list for view_flights
     if ($action === 'view_flights' && $flight_code === null) {
-        // MODIFICATION START: Replace function call with direct query + JOINs + COUNT
-        $sql = "SELECT
-                    l.*, -- Select all columns from lend table
+        $sql_list = "SELECT
+                    l.*,
                     lt.maksimaalne_reisijate_arv,
-                    COUNT(b.broneering_id) FILTER (WHERE b.seisund_kood = 'ACTIVE') AS booked_count -- Count only active bookings
+                    COUNT(b.broneering_id) FILTER (WHERE b.seisund_kood = 'ACTIVE') AS booked_count
                 FROM lennufirma.lend l
-                LEFT JOIN lennufirma.lennukituup lt ON l.lennukituup_kood = lt.lennukituup_kood
-                LEFT JOIN lennufirma.broneering b ON l.lend_kood = b.lend_kood -- Join with bookings table
-                GROUP BY l.lend_kood, lt.maksimaalne_reisijate_arv -- Group by flight code and max passengers (implicitly groups by all l.* columns due to PRIMARY KEY)
+                LEFT JOIN lennufirma.lennuk ln ON l.lennuk_reg_nr = ln.registreerimisnumber
+                LEFT JOIN lennufirma.lennukituup lt ON COALESCE(ln.lennukituup_kood, l.lennukituup_kood) = lt.lennukituup_kood
+                LEFT JOIN lennufirma.broneering b ON l.lend_kood = b.lend_kood
+                GROUP BY l.lend_kood, lt.maksimaalne_reisijate_arv
                 ORDER BY l.eeldatav_lahkumis_aeg DESC";
-        $stmt_list = $pdo->query($sql);
-        // MODIFICATION END
+        $stmt_list = $pdo->query($sql_list);
 
         $list_data = $stmt_list ? $stmt_list->fetchAll(PDO::FETCH_ASSOC) : [];
-        if ($stmt_list === false) { // Check if query failed
+        if ($stmt_list === false) {
             log_error("Failed to execute query to fetch flight list for action '{$action}'. PDO Error: " . implode(" - ", $pdo->errorInfo()));
             $message = ['type' => 'warning', 'text' => "Could not load flight list."];
-        } elseif (empty($list_data)) {
-             // Optional: Set a message if the list is empty, but not due to an error
-             // $message = ['type' => 'info', 'text' => "No flights found."];
         }
     }
 

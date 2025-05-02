@@ -137,15 +137,15 @@ CREATE TABLE lennujaam (
     koordinaadid_laius DECIMAL(9, 6) NOT NULL,
     koordinaadid_pikkus DECIMAL(9, 6) NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'OPEN',
-    reg_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-    viimase_muutm_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    reg_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    viimase_muutm_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     CONSTRAINT pk_lennujaam PRIMARY KEY (lennujaam_kood),
     CONSTRAINT fk_lennujaam_seisund FOREIGN KEY (seisund_kood) REFERENCES lennujaama_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_lennujaam_kood_format CHECK (lennujaam_kood ~ '^[A-Z]{3}$'),
     CONSTRAINT chk_lennujaam_kood_not_empty CHECK (lennujaam_kood !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lennujaam_nimi_not_empty CHECK (nimi !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lennujaam_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
-    CONSTRAINT chk_lennujaam_aeg_order CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)))
+    CONSTRAINT chk_lennujaam_aeg_order CHECK (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval))
 );
 COMMENT ON TABLE lennujaam IS 'Represents an airport.';
 
@@ -153,16 +153,19 @@ CREATE TABLE lennukituup (
     lennukituup_kood VARCHAR(20) NOT NULL,
     nimetus VARCHAR(100) NOT NULL,
     maksimaalne_lennukaugus DECIMAL(10, 2),
-    maksimaalne_reisijate_arv INT,
-    pardapersonali_arv INT,
-    pilootide_arv INT,
+    maksimaalne_reisijate_arv SMALLINT,
+    pardapersonali_arv SMALLINT,
+    pilootide_arv SMALLINT,
     CONSTRAINT pk_lennukituup PRIMARY KEY (lennukituup_kood),
     CONSTRAINT chk_lennukituup_kood_not_empty CHECK (lennukituup_kood !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lennukituup_nimetus_not_empty CHECK (nimetus !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lennukituup_kaugus CHECK (maksimaalne_lennukaugus > 0),
     CONSTRAINT chk_lennukituup_max_reisijate_arv_positive CHECK (maksimaalne_reisijate_arv > 0),
+    CONSTRAINT chk_lennukituup_max_reisijate_arv_upper CHECK (maksimaalne_reisijate_arv <= 1500),
     CONSTRAINT chk_lennukituup_pardapersonali_arv_positive CHECK (pardapersonali_arv > 0),
-    CONSTRAINT chk_lennukituup_pilootide_arv_positive CHECK (pilootide_arv > 0)
+    CONSTRAINT chk_lennukituup_pardapersonali_arv_upper CHECK (pardapersonali_arv <= 100), 
+    CONSTRAINT chk_lennukituup_pilootide_arv_positive CHECK (pilootide_arv > 0),
+    CONSTRAINT chk_lennukituup_pilootide_arv_upper CHECK (pilootide_arv <= 10)
 );
 COMMENT ON TABLE lennukituup IS 'Represents an aircraft type (e.g., A320, B737).';
 
@@ -170,27 +173,27 @@ CREATE TABLE lennuk (
     registreerimisnumber VARCHAR(10) NOT NULL,
     lennukituup_kood VARCHAR(20) NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    reg_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-    viimase_muutm_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    reg_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    viimase_muutm_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     CONSTRAINT pk_lennuk PRIMARY KEY (registreerimisnumber),
     CONSTRAINT fk_lennuk_lennukituup FOREIGN KEY (lennukituup_kood) REFERENCES lennukituup(lennukituup_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_lennuk_seisund FOREIGN KEY (seisund_kood) REFERENCES lennuki_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_lennuk_registreerimisnumber_not_empty CHECK (registreerimisnumber !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lennuk_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
-    CONSTRAINT chk_lennuk_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= reg_aeg)
+    CONSTRAINT chk_lennuk_aeg_order CHECK (viimase_muutm_aeg >= reg_aeg)
 );
 COMMENT ON TABLE lennuk IS 'Represents a specific aircraft instance.';
 
 CREATE TABLE isik (
     isik_id SERIAL,
-    isikukood VARCHAR(20) NULL,
+    isikukood VARCHAR(20),
     eesnimi VARCHAR(50),
     perenimi VARCHAR(50),
-    synni_kp DATE NULL,
-    elukoht TEXT NULL,
+    synni_kp DATE,
+    elukoht TEXT,
     e_meil VARCHAR(254) NOT NULL,
-    reg_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-    viimase_muutm_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    reg_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    viimase_muutm_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     CONSTRAINT pk_isik PRIMARY KEY (isik_id),
     CONSTRAINT uq_isik_e_meil UNIQUE (e_meil),
     CONSTRAINT uq_isik_isikukood UNIQUE (isikukood),
@@ -198,19 +201,18 @@ CREATE TABLE isik (
     CONSTRAINT chk_isik_eesnimi_not_empty CHECK (eesnimi !~ '^[[:space:]]*$'),
     CONSTRAINT chk_isik_perenimi_not_empty CHECK (perenimi !~ '^[[:space:]]*$'),
     CONSTRAINT chk_isik_elukoht_not_empty CHECK (elukoht !~ '^[[:space:]]*$'),
-    CONSTRAINT chk_isik_e_meil_not_empty CHECK (e_meil !~ '^[[:space:]]*$'),
     CONSTRAINT chk_isik_email_format CHECK (e_meil LIKE '_%@_%.__%'),
     CONSTRAINT chk_isik_synni_kp_range CHECK (synni_kp >= '1900-01-01' AND synni_kp < CURRENT_DATE),
     CONSTRAINT chk_isik_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < '2100-01-01'),
-    CONSTRAINT chk_isik_aeg_order CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval))),
+    CONSTRAINT chk_isik_aeg_order CHECK (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
     CONSTRAINT chk_isik_eesnimi_or_perenimi_not_null CHECK (eesnimi IS NOT NULL OR perenimi IS NOT NULL),
-    CONSTRAINT chk_isik_reg_aeg_after_synni_kp CHECK (synni_kp IS NULL OR reg_aeg::date > synni_kp)
+    CONSTRAINT chk_isik_reg_aeg_after_synni_kp CHECK (reg_aeg::date > synni_kp)
 );
 COMMENT ON TABLE isik IS 'Represents a person (can be employee or client).';
 
 CREATE TABLE kuupaevade_vahemiku_maandumiskeeld (
-    alguse_aeg TIMESTAMPTZ NOT NULL,
-    lopu_aeg TIMESTAMPTZ NOT NULL,
+    alguse_aeg TIMESTAMP(0) NOT NULL,
+    lopu_aeg TIMESTAMP(0) NOT NULL,
     lennujaam_kood VARCHAR(3) NOT NULL,
     CONSTRAINT pk_kuupaevade_vahemiku_maandumiskeeld PRIMARY KEY (alguse_aeg, lopu_aeg, lennujaam_kood),
     CONSTRAINT fk_kuupaevade_vahemiku_maandumiskeeld_lennujaam FOREIGN KEY (lennujaam_kood) REFERENCES lennujaam(lennujaam_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -232,12 +234,10 @@ COMMENT ON TABLE lennujaama_vastuvoetavad_lennukituubid IS 'Links airports to th
 
 
 CREATE TABLE kasutaja_konto (
-    kasutakonto_id SERIAL NOT NULL,
     on_aktiivne BOOLEAN NOT NULL DEFAULT TRUE,
     parool VARCHAR(255) NOT NULL,
     isik_id INT NOT NULL,
-    CONSTRAINT pk_kasutaja_konto PRIMARY KEY (kasutakonto_id),
-    CONSTRAINT fk_kasutaja_konto_isik FOREIGN KEY (isik_id) REFERENCES isik(isik_id) ON DELETE CASCADE,
+    CONSTRAINT pk_kasutaja_konto PRIMARY KEY (isik_id),
     CONSTRAINT unique_kasutaja_konto_isik_id UNIQUE(isik_id),
     CONSTRAINT chk_kasutaja_konto_parool_not_empty CHECK (parool !~ '^[[:space:]]*$')
 );
@@ -266,8 +266,8 @@ CREATE TABLE litsents (
     tootaja_isik_id INT NOT NULL,
     lennukituup_kood VARCHAR(20) NOT NULL,
     roll_kood VARCHAR(20) NOT NULL,
-    kehtivuse_algus TIMESTAMPTZ NOT NULL,
-    kehtivuse_lopp TIMESTAMPTZ NOT NULL,
+    kehtivuse_algus TIMESTAMP(0) NOT NULL,
+    kehtivuse_lopp TIMESTAMP(0) NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'VALID',
     CONSTRAINT pk_litsents PRIMARY KEY (litsents_id),
     CONSTRAINT fk_litsents_tootaja FOREIGN KEY (tootaja_isik_id) REFERENCES tootaja(isik_id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -287,15 +287,15 @@ CREATE TABLE lend (
     sihtlennujaam_kood VARCHAR(3) NOT NULL,
     lennukituup_kood VARCHAR(20) NULL,
     lennuk_reg_nr VARCHAR(10) NULL,
-    eeldatav_lahkumis_aeg TIMESTAMPTZ NOT NULL,
-    eeldatav_saabumis_aeg TIMESTAMPTZ NOT NULL,
-    tegelik_lahkumis_aeg TIMESTAMPTZ,
-    tegelik_saabumis_aeg TIMESTAMPTZ,
+    eeldatav_lahkumis_aeg TIMESTAMP(0) NOT NULL,
+    eeldatav_saabumis_aeg TIMESTAMP(0) NOT NULL,
+    tegelik_lahkumis_aeg TIMESTAMP(0),
+    tegelik_saabumis_aeg TIMESTAMP(0),
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'PLANNED',
-    kaugus_linnulennult DECIMAL(10, 2) NULL,
-    tuhistamise_pohjus TEXT NULL,
-    reg_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-    viimase_muutm_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    kaugus_linnulennult DECIMAL(10, 2),
+    tuhistamise_pohjus TEXT,
+    reg_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    viimase_muutm_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     CONSTRAINT pk_lend PRIMARY KEY (lend_kood),
     CONSTRAINT fk_lend_lahtelennujaam FOREIGN KEY (lahtelennujaam_kood) REFERENCES lennujaam(lennujaam_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_lend_sihtlennujaam FOREIGN KEY (sihtlennujaam_kood) REFERENCES lennujaam(lennujaam_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -305,17 +305,17 @@ CREATE TABLE lend (
     CONSTRAINT chk_lend_kood_not_empty CHECK (lend_kood !~ '^[[:space:]]*$'),
     CONSTRAINT chk_lend_lennujaam_differ CHECK (sihtlennujaam_kood <> lahtelennujaam_kood),
     CONSTRAINT chk_lend_eeldatav_saabumine_after_lahkumine CHECK (eeldatav_saabumis_aeg > eeldatav_lahkumis_aeg),
-    CONSTRAINT chk_lend_tegelik_aeg_order CHECK (tegelik_saabumis_aeg IS NULL OR tegelik_lahkumis_aeg IS NULL OR tegelik_saabumis_aeg > tegelik_lahkumis_aeg),
+    CONSTRAINT chk_lend_tegelik_aeg_order CHECK (tegelik_saabumis_aeg > tegelik_lahkumis_aeg),
     CONSTRAINT chk_lend_lennuk_or CHECK ( (lennukituup_kood IS NOT NULL) OR (lennuk_reg_nr IS NOT NULL) ),
     CONSTRAINT chk_lend_tuhistamise_pohjus CHECK ( (seisund_kood <> 'CANCELED') OR (tuhistamise_pohjus IS NOT NULL AND tuhistamise_pohjus !~ '^[[:space:]]*$') ),
     CONSTRAINT chk_lend_reg_aeg_range CHECK (reg_aeg >= '2000-01-01' AND reg_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
-    CONSTRAINT chk_lend_aeg_order CHECK (viimase_muutm_aeg IS NULL OR viimase_muutm_aeg >= reg_aeg),
+    CONSTRAINT chk_lend_aeg_order CHECK (viimase_muutm_aeg >= reg_aeg),
     CONSTRAINT chk_lend_eeldatav_lahkumine_range CHECK (eeldatav_lahkumis_aeg > reg_aeg AND eeldatav_lahkumis_aeg < (reg_aeg + '5 years'::interval)),
     CONSTRAINT chk_lend_eeldatav_saabumine_range CHECK (eeldatav_saabumis_aeg > eeldatav_lahkumis_aeg AND (eeldatav_saabumis_aeg - eeldatav_lahkumis_aeg <= '48 hours'::interval)),
     CONSTRAINT chk_lend_kaugus_linnulennult_range CHECK (kaugus_linnulennult > 0 AND kaugus_linnulennult <= 21000),
-    CONSTRAINT chk_lend_tegelik_lahkumis_aeg_range CHECK (tegelik_lahkumis_aeg IS NULL OR (tegelik_lahkumis_aeg >= reg_aeg AND tegelik_lahkumis_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval))),
-    CONSTRAINT chk_lend_tegelik_saabumis_aeg_range CHECK (tegelik_saabumis_aeg IS NULL OR (tegelik_saabumis_aeg >= tegelik_lahkumis_aeg AND tegelik_saabumis_aeg < (tegelik_lahkumis_aeg + '24 hours'::interval))),
-    CONSTRAINT chk_lend_viimase_muutm_aeg_range CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)))
+    CONSTRAINT chk_lend_tegelik_lahkumis_aeg_range CHECK (tegelik_lahkumis_aeg >= reg_aeg AND tegelik_lahkumis_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
+    CONSTRAINT chk_lend_tegelik_saabumis_aeg_range CHECK (tegelik_saabumis_aeg >= tegelik_lahkumis_aeg AND tegelik_saabumis_aeg < (tegelik_lahkumis_aeg + '24 hours'::interval)),
+    CONSTRAINT chk_lend_viimase_muutm_aeg_range CHECK (viimase_muutm_aeg >= reg_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval))
 );
 COMMENT ON TABLE lend IS 'Represents a flight schedule.';
 
@@ -335,8 +335,8 @@ COMMENT ON TABLE tootaja_lennus IS 'Associates employees with specific flights a
 CREATE TABLE hooldus (
     hooldus_id SERIAL,
     lennuk_reg_nr VARCHAR(10) NOT NULL,
-    alguse_aeg TIMESTAMPTZ NOT NULL,
-    lopu_aeg TIMESTAMPTZ NOT NULL,
+    alguse_aeg TIMESTAMP(0) NOT NULL,
+    lopu_aeg TIMESTAMP(0) NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'PLANNED',
     kirjeldus TEXT NULL,
     lennujaam_kood VARCHAR(3) NOT NULL,
@@ -357,8 +357,8 @@ CREATE TABLE broneering (
     lend_kood VARCHAR(10) NOT NULL,
     klient_isik_id INT NOT NULL,
     seisund_kood VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    broneerimise_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-    viimase_muutm_aeg TIMESTAMPTZ(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    broneerimise_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    viimase_muutm_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     maksumus DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     CONSTRAINT pk_broneering PRIMARY KEY (broneering_id),
     CONSTRAINT fk_broneering_lend FOREIGN KEY (lend_kood) REFERENCES lend(lend_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -366,7 +366,7 @@ CREATE TABLE broneering (
     CONSTRAINT fk_broneering_seisund FOREIGN KEY (seisund_kood) REFERENCES broneeringu_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_broneering_lend_klient UNIQUE (lend_kood, klient_isik_id),
     CONSTRAINT chk_broneering_broneerimise_aeg_range CHECK (broneerimise_aeg >= '2000-01-01' AND broneerimise_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
-    CONSTRAINT chk_broneering_viimase_muutm_aeg_range CHECK (viimase_muutm_aeg IS NULL OR (viimase_muutm_aeg >= broneerimise_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval))),
+    CONSTRAINT chk_broneering_viimase_muutm_aeg_range CHECK (viimase_muutm_aeg >= broneerimise_aeg AND viimase_muutm_aeg < (CURRENT_TIMESTAMP(0)+'1 second'::interval)),
     CONSTRAINT chk_broneering_maksumus_non_negative CHECK (maksumus >= 0)
 );
 COMMENT ON TABLE broneering IS 'Represents a client booking on a specific flight.';
@@ -519,13 +519,14 @@ FOR EACH ROW EXECUTE FUNCTION lennufirma.check_lennuk_type_match();
 -- Helper function to check landing ban
 CREATE OR REPLACE FUNCTION lennufirma.fn_check_landing_ban(
     p_airport_code VARCHAR(3),
-    p_arrival_time TIMESTAMPTZ
+    p_arrival_time TIMESTAMP(0)
 ) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     IF EXISTS (
         SELECT 1 FROM lennufirma.kuupaevade_vahemiku_maandumiskeeld
         WHERE lennujaam_kood = p_airport_code
-          AND TSTZRANGE(alguse_aeg, lopu_aeg, '[]') @> p_arrival_time
+          AND p_arrival_time >= alguse_aeg
+          AND p_arrival_time < lopu_aeg
     ) THEN
         RAISE EXCEPTION 'Landing ban active at airport % during the planned arrival time %.', p_airport_code, p_arrival_time;
     END IF;
@@ -596,7 +597,7 @@ COMMENT ON FUNCTION lennufirma.fn_calculate_distance IS 'Calculates the great-ci
 -- OP1: Registreeri lend
 CREATE OR REPLACE FUNCTION lennufirma.fn_op1_registreeri_lend(
   p_lennu_kood VARCHAR(10), p_lahtelennujaam_kood VARCHAR(3), p_sihtlennujaam_kood VARCHAR(3),
-  p_eeldatav_lahkumis_aeg TIMESTAMPTZ, p_eeldatav_saabumis_aeg TIMESTAMPTZ,
+  p_eeldatav_lahkumis_aeg TIMESTAMP(0), p_eeldatav_saabumis_aeg TIMESTAMP(0),
   p_lennukituup_kood VARCHAR(20) DEFAULT NULL, p_lennuk_reg_nr VARCHAR(10) DEFAULT NULL
 ) RETURNS VARCHAR(10) LANGUAGE plpgsql AS $$
 DECLARE
@@ -662,9 +663,9 @@ END; $$;
 COMMENT ON FUNCTION fn_op3_tuhista_lend IS 'OP3: Changes flight status to CANCELED and records the mandatory reason.';
 
 -- OP4: Maara hilinenuks
-CREATE OR REPLACE FUNCTION fn_op4_maara_hilinenuks(p_lennu_kood VARCHAR(10), p_uus_lahkumis_aeg TIMESTAMPTZ, p_uus_saabumis_aeg TIMESTAMPTZ)
+CREATE OR REPLACE FUNCTION fn_op4_maara_hilinenuks(p_lennu_kood VARCHAR(10), p_uus_lahkumis_aeg TIMESTAMP(0), p_uus_saabumis_aeg TIMESTAMP(0))
 RETURNS VOID LANGUAGE plpgsql AS $$
-DECLARE v_lend_seisund VARCHAR(20); v_original_lahkumis_aeg TIMESTAMPTZ; v_siht_kood VARCHAR(3);
+DECLARE v_lend_seisund VARCHAR(20); v_original_lahkumis_aeg TIMESTAMP(0); v_siht_kood VARCHAR(3);
 BEGIN
   SELECT l.seisund_kood, l.eeldatav_lahkumis_aeg, l.sihtlennujaam_kood
   INTO v_lend_seisund, v_original_lahkumis_aeg, v_siht_kood
@@ -698,13 +699,13 @@ COMMENT ON FUNCTION fn_op13_kustuta_lend IS 'OP13: Deletes a flight only if it i
 
 -- OP14: Muuda lendu
 CREATE OR REPLACE FUNCTION fn_op14_muuda_lendu(
-  p_lennu_kood VARCHAR(10), p_uus_lahkumis_aeg TIMESTAMPTZ DEFAULT NULL, p_uus_saabumis_aeg TIMESTAMPTZ DEFAULT NULL,
+  p_lennu_kood VARCHAR(10), p_uus_lahkumis_aeg TIMESTAMP(0) DEFAULT NULL, p_uus_saabumis_aeg TIMESTAMP(0) DEFAULT NULL,
   p_uus_lennukituup_kood VARCHAR(20) DEFAULT NULL, p_uus_lennuk_reg_nr VARCHAR(10) DEFAULT NULL,
   p_uus_sihtlennujaam_kood VARCHAR(3) DEFAULT NULL, p_uus_lahtelennujaam_kood VARCHAR(3) DEFAULT NULL
 ) RETURNS lend LANGUAGE plpgsql AS $$
 DECLARE
   v_lend lend%ROWTYPE; v_rec lend%ROWTYPE;
-  v_final_lahkumis_aeg TIMESTAMPTZ; v_final_saabumis_aeg TIMESTAMPTZ;
+  v_final_lahkumis_aeg TIMESTAMP(0); v_final_saabumis_aeg TIMESTAMP(0);
   v_final_lahke_kood VARCHAR(3); v_final_siht_kood VARCHAR(3);
   v_final_tuup_kood VARCHAR(20); v_final_reg_nr VARCHAR(10);
   v_aircraft_type_supported_departure BOOLEAN; v_aircraft_type_supported_arrival BOOLEAN;
@@ -775,7 +776,7 @@ COMMENT ON FUNCTION fn_op14_muuda_lendu IS 'OP14: Updates selected flight data, 
 CREATE OR REPLACE FUNCTION fn_op18_maara_lennuk_lennule(p_lennu_kood VARCHAR(10), p_lennuk_reg_nr VARCHAR(10))
 RETURNS VOID LANGUAGE plpgsql AS $$
 DECLARE
-  v_lend_seisund VARCHAR(20); v_lend_tuup_kood VARCHAR(20); v_lend_lahkumis_aeg TIMESTAMPTZ; v_lend_saabumis_aeg TIMESTAMPTZ;
+  v_lend_seisund VARCHAR(20); v_lend_tuup_kood VARCHAR(20); v_lend_lahkumis_aeg TIMESTAMP(0); v_lend_saabumis_aeg TIMESTAMP(0);
   v_lennuk_seisund VARCHAR(20); v_lennuk_tuup_kood VARCHAR(20); v_is_conflicting BOOLEAN;
   v_lend_lahtelennujaam_kood VARCHAR(3); v_lend_sihtlennujaam_kood VARCHAR(3);
   v_aircraft_type_supported_departure BOOLEAN; v_aircraft_type_supported_arrival BOOLEAN;
@@ -803,13 +804,21 @@ BEGIN
   IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP18 Error: Assigned aircraft % type (%) not supported at destination airport %.', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, v_lend_sihtlennujaam_kood; END IF;
 
   -- Time Conflict Check (2-hour buffer before/after)
-  SELECT EXISTS (
-      SELECT 1 FROM lend l_conflict
-      WHERE l_conflict.lennuk_reg_nr = upper(p_lennuk_reg_nr)
-      AND l_conflict.lend_kood <> upper(p_lennu_kood)
-      AND l_conflict.seisund_kood NOT IN ('COMPLETED', 'CANCELED', 'LANDED', 'DEBOARDING')
-      AND TSTZRANGE(l_conflict.eeldatav_lahkumis_aeg - INTERVAL '2 hour', l_conflict.eeldatav_saabumis_aeg + INTERVAL '2 hour', '[]') && TSTZRANGE(v_lend_lahkumis_aeg, v_lend_saabumis_aeg, '[]')
-  ) INTO v_is_conflicting;
+ SELECT EXISTS (
+    SELECT 1
+    FROM lend l_conflict
+    WHERE
+        -- Check for the same aircraft registration number (case-insensitive)
+        l_conflict.lennuk_reg_nr = upper(p_lennuk_reg_nr)
+        -- Exclude the flight itself being checked/modified
+    AND l_conflict.lend_kood <> upper(p_lennu_kood) -- Assuming lend_kood is the primary key for lend table
+        -- Exclude flights that are definitely finished or cancelled
+    AND l_conflict.seisund_kood NOT IN ('LÕPETATUD', 'TÜHISTATUD', 'MAANDUNUD', 'PARDALT LAHKUMINE') -- Use your actual status codes
+        -- Overlap check using standard operators:
+    AND (l_conflict.eeldatav_lahkumis_aeg - INTERVAL '2 hour') < v_lend_saabumis_aeg -- Conflict starts before new one ends (using < as end is often exclusive)
+    AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '2 hour') > v_lend_lahkumis_aeg -- Conflict ends after new one starts (using > as start is often inclusive)
+)
+INTO v_is_conflicting; -- Assign the boolean result to your variable
   IF v_is_conflicting THEN RAISE EXCEPTION 'OP18 Error: Aircraft % is already assigned to another flight with overlapping times.', upper(p_lennuk_reg_nr); END IF;
 
   -- Assign aircraft and update type if it was null
@@ -823,7 +832,7 @@ COMMENT ON FUNCTION fn_op18_maara_lennuk_lennule IS 'OP18: Assigns an active air
 CREATE OR REPLACE FUNCTION fn_op16_lisa_tootaja_lennule(p_lennu_kood VARCHAR(10), p_tootaja_isik_id INT, p_rolli_kood VARCHAR(20))
 RETURNS INT LANGUAGE plpgsql AS $$
 DECLARE
-  v_lend_seisund VARCHAR(20); v_lend_tuup_kood VARCHAR(20); v_lend_lahkumis_aeg TIMESTAMPTZ; v_lend_saabumis_aeg TIMESTAMPTZ;
+  v_lend_seisund VARCHAR(20); v_lend_tuup_kood VARCHAR(20); v_lend_lahkumis_aeg TIMESTAMP(0); v_lend_saabumis_aeg TIMESTAMP(0);
   v_tootaja_seisund VARCHAR(20); -- Fetched employee status
   v_tootaja_lennus_id INT; v_litsents_olemas BOOLEAN := TRUE; v_is_conflicting BOOLEAN;
 BEGIN
@@ -868,14 +877,22 @@ BEGIN
   END IF;
 
   -- Check Time Conflicts (3-hour buffer)
-  SELECT EXISTS (
-      SELECT 1 FROM tootaja_lennus tl
-      JOIN lend l_conflict ON tl.lend_kood = l_conflict.lend_kood
-      WHERE tl.tootaja_isik_id = p_tootaja_isik_id
-      AND l_conflict.lend_kood <> upper(p_lennu_kood)
-      AND l_conflict.seisund_kood NOT IN ('COMPLETED', 'CANCELED', 'LANDED', 'DEBOARDING')
-      AND TSTZRANGE(l_conflict.eeldatav_lahkumis_aeg - INTERVAL '3 hour', l_conflict.eeldatav_saabumis_aeg + INTERVAL '3 hour', '[]') && TSTZRANGE(v_lend_lahkumis_aeg, v_lend_saabumis_aeg, '[]')
-  ) INTO v_is_conflicting;
+SELECT EXISTS (
+    SELECT 1
+    FROM tootaja_lennus tl
+    JOIN lend l_conflict ON tl.lend_kood = l_conflict.lend_kood -- Corrected JOIN condition to use kood
+    WHERE
+        -- Check for the specific employee
+        tl.tootaja_isik_id = p_tootaja_isik_id
+        -- Exclude the specific flight being assigned/modified
+    AND l_conflict.lend_kood <> upper(p_lennu_kood) -- Assuming kood is the primary key for lend
+        -- Exclude flights that are definitely finished or cancelled
+    AND l_conflict.seisund_kood NOT IN ('LÕPETATUD', 'TÜHISTATUD', 'MAANDUNUD', 'PARDALT LAHKUMINE') -- Use your actual status codes
+        -- Overlap check using standard operators:
+    AND (l_conflict.eeldatav_lahkumis_aeg - INTERVAL '3 hour') < v_lend_saabumis_aeg -- Conflict starts before new one ends
+    AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '3 hour') > v_lend_lahkumis_aeg -- Conflict ends after new one starts
+)
+INTO v_is_conflicting; -- Assign the boolean result to your variable
   IF v_is_conflicting THEN RAISE EXCEPTION 'OP16 Error: Employee % is already assigned to another flight with overlapping times.', p_tootaja_isik_id; END IF;
 
   -- Insert assignment
@@ -953,12 +970,12 @@ BEGIN RETURN QUERY SELECT tr.roll_kood, tr.nimetus FROM lennufirma.tootaja_roll 
 COMMENT ON FUNCTION fn_tootaja_roll_read_all IS 'Returns all employee roles for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lend_read_all()
-RETURNS TABLE (lend_kood VARCHAR, lahtelennujaam_kood VARCHAR, sihtlennujaam_kood VARCHAR, lennukituup_kood VARCHAR, lennuk_reg_nr VARCHAR, eeldatav_lahkumis_aeg TIMESTAMPTZ, eeldatav_saabumis_aeg TIMESTAMPTZ, tegelik_lahkumis_aeg TIMESTAMPTZ, tegelik_saabumis_aeg TIMESTAMPTZ, seisund_kood VARCHAR, kaugus_linnulennult DECIMAL, tuhistamise_pohjus TEXT) AS $$
+RETURNS TABLE (lend_kood VARCHAR, lahtelennujaam_kood VARCHAR, sihtlennujaam_kood VARCHAR, lennukituup_kood VARCHAR, lennuk_reg_nr VARCHAR, eeldatav_lahkumis_aeg TIMESTAMP(0), eeldatav_saabumis_aeg TIMESTAMP(0), tegelik_lahkumis_aeg TIMESTAMP(0), tegelik_saabumis_aeg TIMESTAMP(0), seisund_kood VARCHAR, kaugus_linnulennult DECIMAL, tuhistamise_pohjus TEXT) AS $$
 BEGIN RETURN QUERY SELECT l.lend_kood, l.lahtelennujaam_kood, l.sihtlennujaam_kood, l.lennukituup_kood, l.lennuk_reg_nr, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.tegelik_lahkumis_aeg, l.tegelik_saabumis_aeg, l.seisund_kood, l.kaugus_linnulennult, l.tuhistamise_pohjus FROM lennufirma.lend l ORDER BY l.eeldatav_lahkumis_aeg DESC; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lend_read_all IS 'Returns all flights for listing.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lend_read_by_kood(p_kood VARCHAR)
-RETURNS TABLE (lend_kood VARCHAR, lahtelennujaam_kood VARCHAR, sihtlennujaam_kood VARCHAR, lennukituup_kood VARCHAR, lennuk_reg_nr VARCHAR, eeldatav_lahkumis_aeg TIMESTAMPTZ, eeldatav_saabumis_aeg TIMESTAMPTZ, tegelik_lahkumis_aeg TIMESTAMPTZ, tegelik_saabumis_aeg TIMESTAMPTZ, seisund_kood VARCHAR, kaugus_linnulennult DECIMAL, tuhistamise_pohjus TEXT) AS $$
+RETURNS TABLE (lend_kood VARCHAR, lahtelennujaam_kood VARCHAR, sihtlennujaam_kood VARCHAR, lennukituup_kood VARCHAR, lennuk_reg_nr VARCHAR, eeldatav_lahkumis_aeg TIMESTAMP(0), eeldatav_saabumis_aeg TIMESTAMP(0), tegelik_lahkumis_aeg TIMESTAMP(0), tegelik_saabumis_aeg TIMESTAMP(0), seisund_kood VARCHAR, kaugus_linnulennult DECIMAL, tuhistamise_pohjus TEXT) AS $$
 BEGIN RETURN QUERY SELECT l.lend_kood, l.lahtelennujaam_kood, l.sihtlennujaam_kood, l.lennukituup_kood, l.lennuk_reg_nr, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.tegelik_lahkumis_aeg, l.tegelik_saabumis_aeg, l.seisund_kood, l.kaugus_linnulennult, l.tuhistamise_pohjus FROM lennufirma.lend l WHERE l.lend_kood = upper(p_kood); END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lend_read_by_kood IS 'Returns details of a specific flight by its code.';
 

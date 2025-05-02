@@ -86,7 +86,7 @@ $ac_reg_value = $oldInput['uus_lennuk_reg_nr'] ?? $current_ac_reg;
         </div>
 
         <div>
-            <label for="uus_lahkumis_aeg">Departure Time:</label> <input type="datetime-local" id="uus_lahkumis_aeg" name="uus_lahkumis_aeg"
+            <label for="uus_lahkumis_aeg">Departure Time (UTC):</label> <input type="datetime-local" id="uus_lahkumis_aeg" name="uus_lahkumis_aeg"
                    value="<?= htmlspecialchars($dep_time_value) ?>">
             <?php if (isset($errors['uus_lahkumis_aeg'])): ?>
                 <span class="error-message"><?= htmlspecialchars($errors['uus_lahkumis_aeg']) ?></span>
@@ -94,7 +94,7 @@ $ac_reg_value = $oldInput['uus_lennuk_reg_nr'] ?? $current_ac_reg;
         </div>
 
         <div>
-            <label for="uus_saabumis_aeg">Arrival Time:</label> <input type="datetime-local" id="uus_saabumis_aeg" name="uus_saabumis_aeg"
+            <label for="uus_saabumis_aeg">Arrival Time (UTC):</label> <input type="datetime-local" id="uus_saabumis_aeg" name="uus_saabumis_aeg"
                    value="<?= htmlspecialchars($arr_time_value) ?>">
             <?php if (isset($errors['uus_saabumis_aeg'])): ?>
                 <span class="error-message"><?= htmlspecialchars($errors['uus_saabumis_aeg']) ?></span>
@@ -132,3 +132,46 @@ $ac_reg_value = $oldInput['uus_lennuk_reg_nr'] ?? $current_ac_reg;
         <button type="submit">Update Flight</button>
     </form>
 <?php endif; ?>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- Optional: Include locale file for Estonian -->
+<script src="https://npmcdn.com/flatpickr/dist/l10n/en.js"></script>
+
+<!-- In flight_form.php or includes/footer.php -->
+<script>
+    // Wait for the document to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Configuration options
+        const flatpickrConfig = {
+            enableTime: true,       // Enable time selection
+            dateFormat: "Y-m-d H:i", // The format displayed *and submitted*
+            time_24hr: true,        // Use 24-hour format
+            // --- Crucial for UTC ---
+            timeZone: 'UTC',        // Treat selected time as UTC (Flatpickr internal)
+            // Note: Flatpickr itself doesn't force the *picker UI* to UTC,
+            // but it helps format the output string correctly assuming UTC input.
+            // You still need to label clearly.
+            // --- Optional: Estonian Locale ---
+            locale: "en",           
+            // --- Optional: Set default time if needed ---
+            // defaultDate: new Date(), // Example: Set to current time
+            // --- Optional: Min/Max dates ---
+            // minDate: "today",
+        };
+
+        // Initialize for departure time
+        flatpickr("#uus_lahkumis_aeg", {
+            ...flatpickrConfig // Spread the common config
+            // Add specific options for departure if needed
+        });
+
+        // Initialize for arrival time
+        flatpickr("#uus_saabumis_aeg", {
+            ...flatpickrConfig // Spread the common config
+            // Add specific options for arrival if needed
+        });
+
+    });
+</script>

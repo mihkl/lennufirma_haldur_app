@@ -590,3 +590,27 @@ CONTEXT:  PL/pgSQL function fn_op14_muuda_lendu(character varying,timestamp with
 [2025-05-01 02:26:14] Database Operation Error (do_modify_flight): SQLSTATE[P0001]: Raise exception: 7 ERROR:  OP1 Error: Aircraft type B737 not supported at destination airport HEL.
 CONTEXT:  PL/pgSQL function fn_op14_muuda_lendu(character varying,timestamp with time zone,timestamp with time zone,character varying,character varying,character varying,character varying) line 30 at RAISE | SQLSTATE: P0001 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(230): PDOStatement->execute(Array)
 #1 {main}
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:13] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 13:52:14] Flight record not found for action 'view_flights' with flight_code ''
+[2025-05-02 14:13:29] Database Operation Error (do_modify_flight): SQLSTATE[P0001]: Raise exception: 7 ERROR:  OP14 Error: Flight LF202 data cannot be modified in status CANCELED.
+CONTEXT:  PL/pgSQL function fn_op14_muuda_lendu(character varying,timestamp without time zone,timestamp without time zone,character varying,character varying,character varying,character varying) line 14 at RAISE | SQLSTATE: P0001 | Trace: #0 E:\Proge\Andmebaasid\lennufirma_haldur_app\index.php(247): PDOStatement->execute(Array)
+#1 {main}

@@ -209,8 +209,8 @@ if (!empty($filter_type)) {
                 <th>Distance (km)</th>
                 <th>Bookings</th>
                 <th>Aircraft registration</th>
-                <th>Expected departure</th>
-                <th>Expected arrival</th>
+                <th>Expected departure (UTC)</th>
+                <th>Expected arrival (UTC)</th>
                 <th>Status</th> <th>Actions</th>
             </tr>
         </thead>

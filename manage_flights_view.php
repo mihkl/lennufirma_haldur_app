@@ -11,6 +11,14 @@ $activeTab = $_GET['tab'] ?? 'details';
 function isActiveTab($tabName, $activeTab) {
     return $tabName === $activeTab ? 'active' : '';
 }
+$booked_count = $flight['booked_count'] ?? 0; // Get the count passed from controller
+
+// Check flight status for conditional display
+$isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED'; // Use your actual code
+$canDelete = ($flight['seisund_kood'] ?? '') === 'PLANNED' && $booked_count === 0; // Use your actual code
+
+// Get booking info
+$max_passengers = $flight['maksimaalne_reisijate_arv'] ?? null; // Get max passengers
 
 // Check if flight is canceled
 $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
@@ -129,7 +137,9 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
         <button class="tab-button <?= isActiveTab('delay', $activeTab) ?>" onclick="openTab(event, 'delay')">Delay Flight</button>
         <?php endif; ?>
         <button class="tab-button <?= isActiveTab('assign', $activeTab) ?>" onclick="openTab(event, 'assign')">Assign Aircraft</button>
-        <button class="tab-button <?= isActiveTab('delete', $activeTab) ?>" onclick="openTab(event, 'delete')">Delete Flight</button>
+        <?php if ($canDelete): ?>
+            <button class="tab-button <?= isActiveTab('delete', $activeTab) ?>" onclick="openTab(event, 'delete')">Delete Flight</button>
+        <?php endif; ?>
     </div>
 
     <div id="details" class="tab-content <?= isActiveTab('details', $activeTab) ?>">
@@ -139,6 +149,8 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             <strong>Destination:</strong> <?= htmlspecialchars($flight['sihtlennujaam_kood'] ?? 'N/A') ?><br>
             <strong>Aircraft Type:</strong> <?= htmlspecialchars($flight['lennukituup_kood'] ?? 'N/A') ?><br>
             <strong>Aircraft:</strong> <?= htmlspecialchars($flight['lennuk_reg_nr'] ?? 'N/A') ?><br>
+            <strong>Booked Passengers:</strong> <?= htmlspecialchars($booked_count) ?> / <?= htmlspecialchars($max_passengers) ?><br>
+            <strong>Max Passengers:</strong> <?= htmlspecialchars($flight['maksimaalne_reisijate_arv'] ?? 'N/A') ?><br>
             <strong>Expected Departure:</strong> <?= htmlspecialchars($flight['eeldatav_lahkumis_aeg'] ?? 'N/A') ?><br>
             <strong>Expected Arrival:</strong> <?= htmlspecialchars($flight['eeldatav_saabumis_aeg'] ?? 'N/A') ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($flight['seisund_kood'] ?? 'N/A') ?>
@@ -232,7 +244,8 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             </form>
         <?php endif; ?>
     </div>
-
+    
+    <?php if ($canDelete): ?>
     <div id="delete" class="tab-content <?= isActiveTab('delete', $activeTab) ?>">
         <h3>Delete Flight</h3>
         <form method="post" action="">
@@ -244,6 +257,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             <button type="submit" onclick="return confirm('Are you sure you want to delete this flight?')">Delete Flight</button>
         </form>
     </div>
+    <?php endif; ?>
 
     <script>
         // JavaScript for tab functionality
