@@ -15,7 +15,7 @@ $booked_count = $flight['booked_count'] ?? 0; // Get the count passed from contr
 
 // Check flight status for conditional display
 $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED'; // Use your actual code
-$canDelete = ($flight['seisund_kood'] ?? '') === 'PLANNED' && $booked_count === 0; // Use your actual code
+$canDelete = ($flight['seisund_kood'] ?? '') === 'PLANNED'; // Use your actual code
 
 // Get booking info
 $max_passengers = $flight['maksimaalne_reisijate_arv'] ?? null; // Get max passengers

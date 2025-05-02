@@ -361,7 +361,7 @@ CREATE TABLE broneering (
     viimase_muutm_aeg TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     maksumus DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     CONSTRAINT pk_broneering PRIMARY KEY (broneering_id),
-    CONSTRAINT fk_broneering_lend FOREIGN KEY (lend_kood) REFERENCES lend(lend_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_broneering_lend FOREIGN KEY (lend_kood) REFERENCES lend(lend_kood) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_broneering_klient FOREIGN KEY (klient_isik_id) REFERENCES klient(isik_id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_broneering_seisund FOREIGN KEY (seisund_kood) REFERENCES broneeringu_seisund_liik(seisund_kood) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_broneering_lend_klient UNIQUE (lend_kood, klient_isik_id),
@@ -604,44 +604,62 @@ DECLARE
   v_created_kood VARCHAR(10); v_dep_airport_exists BOOLEAN; v_arr_airport_exists BOOLEAN;
   v_type_exists BOOLEAN; v_plane_exists BOOLEAN; v_calculated_distance DECIMAL(10, 2);
   v_actual_aircraft_type VARCHAR(20); v_aircraft_type_supported_departure BOOLEAN; v_aircraft_type_supported_arrival BOOLEAN;
+  v_is_in_maintenance BOOLEAN; -- Variable for maintenance check
 BEGIN
-  -- Basic Input Validation
+  -- Basic Input Validation (as before)...
   IF p_sihtlennujaam_kood = p_lahtelennujaam_kood THEN RAISE EXCEPTION 'OP1 Error: Departure and destination airport cannot be the same (%).', p_lahtelennujaam_kood; END IF;
   IF p_eeldatav_saabumis_aeg <= p_eeldatav_lahkumis_aeg THEN RAISE EXCEPTION 'OP1 Error: Expected arrival time (%) must be later than departure time (%).', p_eeldatav_saabumis_aeg, p_eeldatav_lahkumis_aeg; END IF;
   IF p_lennukituup_kood IS NULL AND p_lennuk_reg_nr IS NULL THEN RAISE EXCEPTION 'OP1 Error: Must specify either aircraft type or specific aircraft.'; END IF;
 
-  -- Existence Checks
+  -- Existence Checks (as before)...
   SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaam lj WHERE lj.lennujaam_kood = p_lahtelennujaam_kood) INTO v_dep_airport_exists; IF NOT v_dep_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Departure airport % not found.', p_lahtelennujaam_kood; END IF;
   SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaam lj WHERE lj.lennujaam_kood = p_sihtlennujaam_kood) INTO v_arr_airport_exists; IF NOT v_arr_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Destination airport % not found.', p_sihtlennujaam_kood; END IF;
   IF p_lennukituup_kood IS NOT NULL THEN SELECT EXISTS (SELECT 1 FROM lennufirma.lennukituup lt WHERE lt.lennukituup_kood = p_lennukituup_kood) INTO v_type_exists; IF NOT v_type_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not found.', p_lennukituup_kood; END IF; END IF;
-  IF p_lennuk_reg_nr IS NOT NULL THEN SELECT EXISTS (SELECT 1 FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = p_lennuk_reg_nr) INTO v_plane_exists; IF NOT v_plane_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft % not found.', p_lennuk_reg_nr; END IF; END IF;
+  IF p_lennuk_reg_nr IS NOT NULL THEN SELECT EXISTS (SELECT 1 FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr)) INTO v_plane_exists; IF NOT v_plane_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft % not found.', upper(p_lennuk_reg_nr); END IF; END IF;
 
-  -- Operational Status Checks
+  -- Operational Status Checks (as before)...
   PERFORM fn_check_airport_status(p_lahtelennujaam_kood);
   PERFORM fn_check_airport_status(p_sihtlennujaam_kood);
   PERFORM fn_check_landing_ban(p_sihtlennujaam_kood, p_eeldatav_saabumis_aeg);
   IF p_lennuk_reg_nr IS NOT NULL THEN
-      PERFORM fn_check_aircraft_status(p_lennuk_reg_nr);
+      PERFORM fn_check_aircraft_status(upper(p_lennuk_reg_nr)); -- Checks if ACTIVE
   END IF;
 
-  -- Airport Type Compatibility Checks
+  -- Airport Type Compatibility Checks (as before)...
   IF p_lennukituup_kood IS NOT NULL THEN
     SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_lahtelennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_departure; IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at departure airport %.', p_lennukituup_kood, p_lahtelennujaam_kood; END IF;
     SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_sihtlennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_arrival; IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at destination airport %.', p_lennukituup_kood, p_sihtlennujaam_kood; END IF;
   END IF;
 
-  -- Aircraft Assignment Type Check
+  -- Aircraft Assignment Type Check (as before)...
   IF p_lennuk_reg_nr IS NOT NULL AND p_lennukituup_kood IS NOT NULL THEN
      SELECT lk.lennukituup_kood INTO v_actual_aircraft_type FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr);
      IF v_actual_aircraft_type <> p_lennukituup_kood THEN RAISE EXCEPTION 'OP1 Error: Assigned aircraft % type (%) does not match flight required type (%).', upper(p_lennuk_reg_nr), v_actual_aircraft_type, p_lennukituup_kood; END IF;
   END IF;
 
-  -- Calculate Distance
+  -- *** ADDED: Maintenance Conflict Check ***
+  IF p_lennuk_reg_nr IS NOT NULL THEN
+      SELECT EXISTS (
+          SELECT 1 FROM lennufirma.hooldus h
+          WHERE h.lennuk_reg_nr = upper(p_lennuk_reg_nr)
+          AND h.seisund_kood <> 'CANCELED' -- Ignore canceled maintenance
+          -- Check for overlap using standard operators
+          AND h.alguse_aeg < p_eeldatav_saabumis_aeg
+          AND h.lopu_aeg > p_eeldatav_lahkumis_aeg
+      ) INTO v_is_in_maintenance;
+
+      IF v_is_in_maintenance THEN
+          RAISE EXCEPTION 'OP1 Error: Aircraft % is scheduled for maintenance during the flight time (% to %).', upper(p_lennuk_reg_nr), p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg;
+      END IF;
+  END IF;
+  -- *** END: Maintenance Conflict Check ***
+
+  -- Calculate Distance (as before)...
   SELECT lennufirma.fn_calculate_distance(p_lahtelennujaam_kood, p_sihtlennujaam_kood) INTO v_calculated_distance;
 
-  -- Insert Flight
+  -- Insert Flight (as before)...
   INSERT INTO lennufirma.lend (lend_kood, lahtelennujaam_kood, sihtlennujaam_kood, lennukituup_kood, lennuk_reg_nr, eeldatav_lahkumis_aeg, eeldatav_saabumis_aeg, seisund_kood, kaugus_linnulennult)
-  VALUES (upper(p_lennu_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, p_lennuk_reg_nr, p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED', v_calculated_distance)
+  VALUES (upper(p_lennu_kood), p_lahtelennujaam_kood, p_sihtlennujaam_kood, p_lennukituup_kood, upper(p_lennuk_reg_nr), p_eeldatav_lahkumis_aeg, p_eeldatav_saabumis_aeg, 'PLANNED', v_calculated_distance)
   RETURNING lend_kood INTO v_created_kood;
 
   RETURN v_created_kood;
@@ -780,48 +798,59 @@ DECLARE
   v_lennuk_seisund VARCHAR(20); v_lennuk_tuup_kood VARCHAR(20); v_is_conflicting BOOLEAN;
   v_lend_lahtelennujaam_kood VARCHAR(3); v_lend_sihtlennujaam_kood VARCHAR(3);
   v_aircraft_type_supported_departure BOOLEAN; v_aircraft_type_supported_arrival BOOLEAN;
+  v_is_in_maintenance BOOLEAN; -- Variable for maintenance check
 BEGIN
+  -- Fetch flight details (as before)...
   SELECT l.seisund_kood, l.lennukituup_kood, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.lahtelennujaam_kood, l.sihtlennujaam_kood
   INTO v_lend_seisund, v_lend_tuup_kood, v_lend_lahkumis_aeg, v_lend_saabumis_aeg, v_lend_lahtelennujaam_kood, v_lend_sihtlennujaam_kood
   FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
   IF NOT FOUND THEN RAISE EXCEPTION 'OP18 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
 
+  -- Fetch aircraft details (as before)...
   SELECT lk.seisund_kood, lk.lennukituup_kood INTO v_lennuk_seisund, v_lennuk_tuup_kood
   FROM lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr);
   IF NOT FOUND THEN RAISE EXCEPTION 'OP18 Error: Aircraft with reg nr % not found.', upper(p_lennuk_reg_nr); END IF;
 
-  -- Status Checks
+  -- Status Checks (as before)...
   IF v_lend_seisund NOT IN ('PLANNED', 'DELAYED') THEN RAISE EXCEPTION 'OP18 Error: Aircraft cannot be assigned to flight % in status %.', upper(p_lennu_kood), v_lend_seisund; END IF;
   PERFORM fn_check_aircraft_status(upper(p_lennuk_reg_nr)); -- Checks if aircraft is ACTIVE
 
-  -- Type Compatibility Checks
+  -- Type Compatibility Checks (as before)...
   IF v_lend_tuup_kood IS NOT NULL AND v_lennuk_tuup_kood <> v_lend_tuup_kood THEN RAISE EXCEPTION 'OP18 Error: Aircraft % type (%) does not match flight % required type (%).', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, upper(p_lennu_kood), v_lend_tuup_kood; END IF;
 
-  -- Airport Compatibility Check for the assigned aircraft's type
+  -- Airport Compatibility Check (as before)...
   SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_lend_lahtelennujaam_kood AND llvt.lennukituup_kood = v_lennuk_tuup_kood) INTO v_aircraft_type_supported_departure;
   IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP18 Error: Assigned aircraft % type (%) not supported at departure airport %.', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, v_lend_lahtelennujaam_kood; END IF;
   SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_lend_sihtlennujaam_kood AND llvt.lennukituup_kood = v_lennuk_tuup_kood) INTO v_aircraft_type_supported_arrival;
   IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP18 Error: Assigned aircraft % type (%) not supported at destination airport %.', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, v_lend_sihtlennujaam_kood; END IF;
 
-  -- Time Conflict Check (2-hour buffer before/after)
- SELECT EXISTS (
-    SELECT 1
-    FROM lend l_conflict
-    WHERE
-        -- Check for the same aircraft registration number (case-insensitive)
-        l_conflict.lennuk_reg_nr = upper(p_lennuk_reg_nr)
-        -- Exclude the flight itself being checked/modified
-    AND l_conflict.lend_kood <> upper(p_lennu_kood) -- Assuming lend_kood is the primary key for lend table
-        -- Exclude flights that are definitely finished or cancelled
-    AND l_conflict.seisund_kood NOT IN ('LÕPETATUD', 'TÜHISTATUD', 'MAANDUNUD', 'PARDALT LAHKUMINE') -- Use your actual status codes
-        -- Overlap check using standard operators:
-    AND (l_conflict.eeldatav_lahkumis_aeg - INTERVAL '2 hour') < v_lend_saabumis_aeg -- Conflict starts before new one ends (using < as end is often exclusive)
-    AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '2 hour') > v_lend_lahkumis_aeg -- Conflict ends after new one starts (using > as start is often inclusive)
-)
-INTO v_is_conflicting; -- Assign the boolean result to your variable
+  -- Time Conflict Check (Other Flights - as before)...
+  SELECT EXISTS (
+    SELECT 1 FROM lend l_conflict
+    WHERE l_conflict.lennuk_reg_nr = upper(p_lennuk_reg_nr)
+      AND l_conflict.lend_kood <> upper(p_lennu_kood)
+      AND l_conflict.seisund_kood NOT IN ('LÕPETATUD', 'TÜHISTATUD', 'MAANDUNUD', 'PARDALT LAHKUMINE')
+      AND (l_conflict.eeldatav_lahkumis_aeg - INTERVAL '2 hour') < v_lend_saabumis_aeg
+      AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '2 hour') > v_lend_lahkumis_aeg
+  ) INTO v_is_conflicting;
   IF v_is_conflicting THEN RAISE EXCEPTION 'OP18 Error: Aircraft % is already assigned to another flight with overlapping times.', upper(p_lennuk_reg_nr); END IF;
 
-  -- Assign aircraft and update type if it was null
+  -- *** ADDED: Maintenance Conflict Check ***
+  SELECT EXISTS (
+      SELECT 1 FROM lennufirma.hooldus h
+      WHERE h.lennuk_reg_nr = upper(p_lennuk_reg_nr)
+      AND h.seisund_kood <> 'CANCELED' -- Ignore canceled maintenance
+      -- Check for overlap using standard operators
+      AND h.alguse_aeg < v_lend_saabumis_aeg
+      AND h.lopu_aeg > v_lend_lahkumis_aeg
+  ) INTO v_is_in_maintenance;
+
+  IF v_is_in_maintenance THEN
+      RAISE EXCEPTION 'OP18 Error: Aircraft % is scheduled for maintenance during the flight time (% to %).', upper(p_lennuk_reg_nr), v_lend_lahkumis_aeg, v_lend_saabumis_aeg;
+  END IF;
+  -- *** END: Maintenance Conflict Check ***
+
+  -- Assign aircraft and update type if it was null (as before)...
   UPDATE lend SET lennuk_reg_nr = upper(p_lennuk_reg_nr), lennukituup_kood = COALESCE(lennukituup_kood, v_lennuk_tuup_kood)
   WHERE lend_kood = upper(p_lennu_kood);
 
