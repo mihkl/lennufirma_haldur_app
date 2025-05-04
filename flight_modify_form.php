@@ -101,34 +101,6 @@ $ac_reg_value = $oldInput['uus_lennuk_reg_nr'] ?? $current_ac_reg;
             <?php endif; ?>
         </div>
 
-        <div>
-            <label for="uus_lennukituup_kood">Aircraft Type:</label>
-            <select id="uus_lennukituup_kood" name="uus_lennukituup_kood">
-                 <option value="">-- Select Type --</option> <?php foreach ($aircraft_types as $code => $name): ?>
-                    <option value="<?= htmlspecialchars($code) ?>" <?= ($ac_type_value === $code) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($name) ?> (<?= htmlspecialchars($code) ?>)
-                    </option>
-                <?php endforeach; ?>
-            </select>
-             <?php if (isset($errors['uus_lennukituup_kood'])): ?>
-                <span class="error-message"><?= htmlspecialchars($errors['uus_lennukituup_kood']) ?></span>
-            <?php endif; ?>
-        </div>
-
-        <div>
-            <label for="uus_lennuk_reg_nr">Aircraft (Registration):</label>
-            <select id="uus_lennuk_reg_nr" name="uus_lennuk_reg_nr">
-                <option value="">-- Select Aircraft --</option> <?php foreach ($aircraft as $reg => $name): ?>
-                    <option value="<?= htmlspecialchars($reg) ?>" <?= ($ac_reg_value === $reg) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($reg) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <?php if (isset($errors['uus_lennuk_reg_nr'])): ?>
-                <span class="error-message"><?= htmlspecialchars($errors['uus_lennuk_reg_nr']) ?></span>
-            <?php endif; ?>
-        </div>
-
         <button type="submit">Update Flight</button>
     </form>
 <?php endif; ?>
