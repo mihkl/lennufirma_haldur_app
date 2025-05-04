@@ -56,13 +56,13 @@ $validation_context = [];
 
 try {
     // --- Fetch Dropdown Data Needed for Flight Operations ---
-    $airports = fetchDropdownData($pdo, 'fn_lennujaam_read_all', 'lennujaam_kood', 'nimi');
-    $aircraft_types = fetchDropdownData($pdo, 'fn_lennukituup_read_all', 'lennukituup_kood', 'nimetus');
+    $airports = fetchDropdownData($pdo, 'fn_lennujaam_read_all', 'lennujaam_kood', 'lj_nimetus');
+    $aircraft_types = fetchDropdownData($pdo, 'fn_lennukituup_read_all', 'lennukituup_kood', 'lt_nimetus');
     $aircraft = fetchDropdownData($pdo, 'fn_lennuk_read_all', 'registreerimisnumber', 'registreerimisnumber');
     $employees = fetchDropdownData($pdo, 'fn_tootaja_read_active', 'isik_id', null, function($row) {
         return trim(($row['eesnimi'] ?? '') . ' ' . ($row['perenimi'] ?? '')) . " (ID: {$row['isik_id']})";
     });
-    $employee_roles = fetchDropdownData($pdo, 'fn_tootaja_roll_read_all', 'roll_kood', 'nimetus');
+    $employee_roles = fetchDropdownData($pdo, 'fn_tootaja_roll_read_all', 'r_kood', 'tr_nimetus');
 
     // --- Populate Validation Context (Reduced) ---
     $validation_context = [
@@ -103,10 +103,10 @@ try {
         // If managing staffing, fetch current crew (keep this logic)
         if ($crud_data && $action === 'manage_staffing') {
             // Assuming fn_lend_read_tootajad exists or use a direct query:
-             $stmt_crew = $pdo->prepare("SELECT i.isik_id, i.eesnimi, i.perenimi, tr.nimetus as rolli_nimetus
+             $stmt_crew = $pdo->prepare("SELECT i.isik_id, i.eesnimi, i.perenimi, tr.tr_nimetus as rolli_nimetus
                                         FROM lennufirma.tootaja_lennus tl
                                         JOIN lennufirma.isik i ON tl.tootaja_isik_id = i.isik_id
-                                        JOIN lennufirma.tootaja_roll tr ON tl.rolli_kood = tr.roll_kood
+                                        JOIN lennufirma.tootaja_roll tr ON tl.r_kood = tr.r_kood
                                         WHERE tl.lend_kood = :flight_code");
             $stmt_crew->bindParam(':flight_code', $flight_code);
             $stmt_crew->execute();

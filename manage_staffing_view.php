@@ -6,7 +6,8 @@ $oldInput = $formOldInput ?? [];
 $errors = $formErrors ?? [];
 ?>
 
-<h2>Manage Staffing: <?= htmlspecialchars($flight['kood'] ?? 'N/A') ?></h2>
+<h2>Manage Staffing: <?= htmlspecialchars($flight['lend_kood'] ?? 'N/A') ?></h2>
+
 
 <?php if (empty($flight)): ?>
     <p>Flight not found.</p>
@@ -33,15 +34,15 @@ $errors = $formErrors ?? [];
             <tbody>
                 <?php foreach ($crew as $member): ?>
                     <tr>
-                        <td><?= htmlspecialchars($member['tootaja_isik_id'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($member['isik_id'] ?? '') ?></td>
                         <td><?= htmlspecialchars(($member['eesnimi'] ?? '') . ' ' . ($member['perenimi'] ?? '')) ?></td>
-                        <td><?= htmlspecialchars($member['roll_kood'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($member['rolli_nimetus'] ?? '') ?></td>
                         <td>
                             <form method="post" action="">
                                 <input type="hidden" name="action" value="do_remove_employee">
-                                <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['kood'] ?? '') ?>">
-                                <input type="hidden" name="tootaja_isik_id" value="<?= htmlspecialchars($member['tootaja_isik_id'] ?? '') ?>">
-                                <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['kood'] ?? '')) ?>">
+                                <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
+                                <input type="hidden" name="tootaja_isik_id" value="<?= htmlspecialchars($member['isik_id'] ?? '') ?>">
+                                <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
                                 <button type="submit" onclick="return confirm('Remove this employee?')">Remove</button>
                             </form>
                         </td>
@@ -68,17 +69,17 @@ $errors = $formErrors ?? [];
         <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
 
         <div>
-            <label for="tootaja_isik_id">Employee:</label>
-            <select id="tootaja_isik_id" name="tootaja_isik_id" required>
+            <label for="isik_id">Employee:</label>
+            <select id="isik_id" name="tootaja_isik_id" required>
                 <option value="">Select Employee</option>
                 <?php foreach ($employees as $id => $name): ?>
-                    <option value="<?= htmlspecialchars($id) ?>" <?= ($oldInput['tootaja_isik_id'] ?? '') === $id ? 'selected' : '' ?>>
+                    <option value="<?= htmlspecialchars($id) ?>" <?= ($oldInput['isik_id'] ?? '') === $id ? 'selected' : '' ?>>
                         <?= htmlspecialchars($name) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
-            <?php if (isset($errors['tootaja_isik_id'])): ?>
-                <span class="error"><?= htmlspecialchars($errors['tootaja_isik_id']) ?></span>
+            <?php if (isset($errors['isik_id'])): ?>
+                <span class="error"><?= htmlspecialchars($errors['isik_id']) ?></span>
             <?php endif; ?>
         </div>
 

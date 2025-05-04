@@ -132,11 +132,11 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
 
     <div class="tabs">
         <button class="tab-button <?= isActiveTab('details', $activeTab) ?>" onclick="openTab(event, 'details')">Details</button>
-        <button class="tab-button <?= isActiveTab('cancel', $activeTab) ?>" onclick="openTab(event, 'cancel')">Cancel Flight</button>
         <?php if (!$isFlightCanceled): ?>
+        <button class="tab-button <?= isActiveTab('cancel', $activeTab) ?>" onclick="openTab(event, 'cancel')">Cancel Flight</button>
         <button class="tab-button <?= isActiveTab('delay', $activeTab) ?>" onclick="openTab(event, 'delay')">Delay Flight</button>
-        <?php endif; ?>
         <button class="tab-button <?= isActiveTab('assign', $activeTab) ?>" onclick="openTab(event, 'assign')">Assign Aircraft</button>
+        <?php endif; ?>
         <?php if ($canDelete): ?>
             <button class="tab-button <?= isActiveTab('delete', $activeTab) ?>" onclick="openTab(event, 'delete')">Delete Flight</button>
         <?php endif; ?>
@@ -159,7 +159,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             <?php endif; ?>
         </p>
     </div>
-
+    <?php if (!$isFlightCanceled): ?>
     <div id="cancel" class="tab-content <?= isActiveTab('cancel', $activeTab) ?>">
         <h3>Cancel Flight</h3>
         <?php if ($isFlightCanceled): ?>
@@ -183,6 +183,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             </form>
         <?php endif; ?>
     </div>
+    <?php endif; ?>
 
     <?php if (!$isFlightCanceled): ?>
     <div id="delay" class="tab-content <?= isActiveTab('delay', $activeTab) ?>">
@@ -194,7 +195,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             <input type="hidden" name="redirect_tab" value="delay">
 
             <div>
-                <label for="uus_lahkumis_aeg">New Departure Time:</label>
+                <label for="uus_lahkumis_aeg">New Departure Time (UTC):</label>
                 <input type="datetime-local" id="uus_lahkumis_aeg" name="uus_lahkumis_aeg" value="<?= htmlspecialchars($oldInput['uus_lahkumis_aeg'] ?? '') ?>" required>
                 <?php if (isset($errors['uus_lahkumis_aeg'])): ?>
                     <span class="error"><?= htmlspecialchars($errors['uus_lahkumis_aeg']) ?></span>
@@ -202,7 +203,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             </div>
 
             <div>
-                <label for="uus_saabumis_aeg">New Arrival Time:</label>
+                <label for="uus_saabumis_aeg">New Arrival Time (UTC):</label>
                 <input type="datetime-local" id="uus_saabumis_aeg" name="uus_saabumis_aeg" value="<?= htmlspecialchars($oldInput['uus_saabumis_aeg'] ?? '') ?>" required>
                 <?php if (isset($errors['uus_saabumis_aeg'])): ?>
                     <span class="error"><?= htmlspecialchars($errors['uus_saabumis_aeg']) ?></span>
@@ -213,7 +214,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
         </form>
     </div>
     <?php endif; ?>
-
+    <?php if (!$isFlightCanceled): ?>
     <div id="assign" class="tab-content <?= isActiveTab('assign', $activeTab) ?>">
         <h3>Assign Aircraft</h3>
         <?php if (!empty($flight['lennuk_reg_nr'])): ?>
@@ -244,6 +245,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
             </form>
         <?php endif; ?>
     </div>
+    <?php endif; ?>
     
     <?php if ($canDelete): ?>
     <div id="delete" class="tab-content <?= isActiveTab('delete', $activeTab) ?>">
