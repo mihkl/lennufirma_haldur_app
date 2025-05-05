@@ -196,7 +196,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
 
             <div>
                 <label for="uus_lahkumis_aeg">New Departure Time (UTC):</label>
-                <input type="datetime-local" id="uus_lahkumis_aeg" name="uus_lahkumis_aeg" value="<?= htmlspecialchars($oldInput['uus_lahkumis_aeg'] ?? '') ?>" required>
+                <input type="datetime-local" id="uus_lahkumis_aeg" name="uus_lahkumis_aeg" value="<?= htmlspecialchars($flight['eeldatav_lahkumis_aeg'] ?? '') ?>" required>
                 <?php if (isset($errors['uus_lahkumis_aeg'])): ?>
                     <span class="error"><?= htmlspecialchars($errors['uus_lahkumis_aeg']) ?></span>
                 <?php endif; ?>
@@ -204,7 +204,7 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
 
             <div>
                 <label for="uus_saabumis_aeg">New Arrival Time (UTC):</label>
-                <input type="datetime-local" id="uus_saabumis_aeg" name="uus_saabumis_aeg" value="<?= htmlspecialchars($oldInput['uus_saabumis_aeg'] ?? '') ?>" required>
+                <input type="datetime-local" id="uus_saabumis_aeg" name="uus_saabumis_aeg" value="<?= htmlspecialchars($flight['eeldatav_saabumis_aeg'] ?? '') ?>" required>
                 <?php if (isset($errors['uus_saabumis_aeg'])): ?>
                     <span class="error"><?= htmlspecialchars($errors['uus_saabumis_aeg']) ?></span>
                 <?php endif; ?>
@@ -261,6 +261,10 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
     </div>
     <?php endif; ?>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/en.js"></script>
+
     <script>
         // JavaScript for tab functionality
         function openTab(evt, tabName) {
@@ -289,6 +293,35 @@ $isFlightCanceled = ($flight['seisund_kood'] ?? '') === 'CANCELED';
 
         // Automatically open the default or specified tab on page load
         document.addEventListener('DOMContentLoaded', function() {
+            const flatpickrConfig = {
+            enableTime: true,       // Enable time selection
+            dateFormat: "Y-m-d H:i", // The format displayed *and submitted*
+            time_24hr: true,        // Use 24-hour format
+            // --- Crucial for UTC ---
+            timeZone: 'UTC',        // Treat selected time as UTC (Flatpickr internal)
+            // Note: Flatpickr itself doesn't force the *picker UI* to UTC,
+            // but it helps format the output string correctly assuming UTC input.
+            // You still need to label clearly.
+            // --- Optional: Estonian Locale ---
+            locale: "en",           
+            // --- Optional: Set default time if needed ---
+            // defaultDate: new Date(), // Example: Set to current time
+            // --- Optional: Min/Max dates ---
+            // minDate: "today",
+        };
+
+        // Initialize for departure time
+        flatpickr("#uus_lahkumis_aeg", {
+            ...flatpickrConfig // Spread the common config
+            // Add specific options for departure if needed
+        });
+
+        // Initialize for arrival time
+        flatpickr("#uus_saabumis_aeg", {
+            ...flatpickrConfig // Spread the common config
+            // Add specific options for arrival if needed
+        });
+
             const urlParams = new URLSearchParams(window.location.search);
             const activeTab = urlParams.get('tab') || 'details'; // Default to 'details'
             

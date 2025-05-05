@@ -72,11 +72,24 @@ $errors = $formErrors ?? [];
             <label for="isik_id">Employee:</label>
             <select id="isik_id" name="tootaja_isik_id" required>
                 <option value="">Select Employee</option>
-                <?php foreach ($employees as $id => $name): ?>
+                <?php 
+                // Create an array of employee IDs who are already assigned to this flight
+                $assigned_employee_ids = [];
+                foreach ($crew as $member) {
+                    $assigned_employee_ids[] = $member['isik_id'];
+                }
+                
+                // Only list employees who are not already part of the crew
+                foreach ($employees as $id => $name): 
+                    if (!in_array($id, $assigned_employee_ids)):
+                ?>
                     <option value="<?= htmlspecialchars($id) ?>" <?= ($oldInput['isik_id'] ?? '') === $id ? 'selected' : '' ?>>
                         <?= htmlspecialchars($name) ?>
                     </option>
-                <?php endforeach; ?>
+                <?php 
+                    endif;
+                endforeach; 
+                ?>
             </select>
             <?php if (isset($errors['isik_id'])): ?>
                 <span class="error"><?= htmlspecialchars($errors['isik_id']) ?></span>
