@@ -244,9 +244,21 @@ if (!empty($filter_type)) {
                         <?php endif; ?>
                     </td>
                     <td>
-                        <a href="?action=manage_flights&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Manage</a> |
-                        <a href="?action=manage_staffing&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Staffing</a> |
-                        <a href="?action=modify_flight&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Modify</a>
+                        <a href="?action=manage_flights&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Manage</a>
+                        <?php 
+                        $staffableStatuses = ['PLANNED', 'DELAYED'];
+                        $currentStatus = $item['seisund_kood'] ?? '';
+                        if (in_array($currentStatus, $staffableStatuses)):
+                        ?>
+                         | <a href="?action=manage_staffing&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Staffing</a>
+                        <?php endif; ?>
+
+                        <?php 
+                        $modifiableStatuses = ['PLANNED', 'CONFIRMED', 'DELAYED'];
+                        if (in_array($currentStatus, $modifiableStatuses)):
+                        ?>
+                         | <a href="?action=modify_flight&flight_code=<?= urlencode($item['lend_kood'] ?? '') ?>">Modify</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
