@@ -33,7 +33,7 @@ if (!isset($pdo, $airports, $aircraft_types, $aircraft)) { die('Required variabl
     <label for="eeldatav_saabumis_aeg">Expected arrival (UTC):</label>
     <input type="datetime-local" id="eeldatav_saabumis_aeg" name="eeldatav_saabumis_aeg" required placeholder="YYYY-MM-DD HH:MM">
 
-    <p>Choose <strong>either</strong> aircraft type <strong>or</strong> specific aircraft:</p>
+    <p>Choose <strong>either</strong> aircraft type <strong>or</strong> specific aircraft <strong>or both</strong>:</p>
 
     <label for="lennukituup_kood">Aircraft type (optional):</label>
     <select id="lennukituup_kood" name="lennukituup_kood">
