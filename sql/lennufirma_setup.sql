@@ -446,10 +446,10 @@ DECLARE
     v_current_bookings INT;
 BEGIN
     -- Get max passengers based on the aircraft type assigned to the flight
-    SELECT FOR UPDATE lt.maksimaalne_reisijate_arv INTO v_max_passengers
+    SELECT lt.maksimaalne_reisijate_arv INTO v_max_passengers
     FROM lend l
     JOIN lennukituup lt ON COALESCE(l.lennukituup_kood, (SELECT lk.lennukituup_kood FROM lennuk lk WHERE lk.registreerimisnumber = l.lennuk_reg_nr)) = lt.lennukituup_kood
-    WHERE l.lend_kood = NEW.lend_kood;
+    WHERE l.lend_kood = NEW.lend_kood FOR UPDATE;
 
     -- If no aircraft type found (should not happen due to constraints, but handle defensively)
     IF v_max_passengers IS NULL THEN
@@ -458,7 +458,7 @@ BEGIN
     END IF;
 
     -- Count current active bookings for the flight
-    SELECT FOR UPDATE COUNT(*) INTO v_current_bookings
+    SELECT COUNT(*) INTO v_current_bookings
     FROM broneering b
     WHERE b.lend_kood = NEW.lend_kood AND b.seisund_kood = 'ACTIVE';
 
@@ -492,11 +492,11 @@ BEGIN
             SELECT lt.maksimaalne_lennukaugus INTO v_max_range
             FROM lennufirma.lennuk l
             JOIN lennufirma.lennukituup lt ON l.lennukituup_kood = lt.lennukituup_kood
-            WHERE l.registreerimisnumber = NEW.lennuk_reg_nr;
+            WHERE l.registreerimisnumber = NEW.lennuk_reg_nr FOR UPDATE;
         ELSIF NEW.lennukituup_kood IS NOT NULL THEN
             SELECT lt.maksimaalne_lennukaugus INTO v_max_range
             FROM lennufirma.lennukituup lt
-            WHERE lt.lennukituup_kood = NEW.lennukituup_kood;
+            WHERE lt.lennukituup_kood = NEW.lennukituup_kood FOR UPDATE;
         ELSE
              -- Should not happen due to table constraint chk_lend_lennuk_or
              RETURN NEW;
@@ -525,9 +525,9 @@ BEGIN
     IF NEW.lennuk_reg_nr IS NOT NULL AND NEW.lennukituup_kood IS NOT NULL THEN
         -- Check if the aircraft's type matches the specified type
         IF NEW.lennukituup_kood <> (
-            SELECT FOR UPDATE lennukituup_kood
+            SELECT lennukituup_kood
             FROM lennufirma.lennuk
-            WHERE registreerimisnumber = NEW.lennuk_reg_nr
+            WHERE registreerimisnumber = NEW.lennuk_reg_nr FOR UPDATE
         ) THEN
             RAISE EXCEPTION 'Aircraft type mismatch: The specified aircraft % is not of type %',
                 NEW.lennuk_reg_nr, NEW.lennukituup_kood;
@@ -548,10 +548,10 @@ CREATE OR REPLACE FUNCTION lennufirma.fn_check_landing_ban(
 ) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
     IF EXISTS (
-        SELECT FOR UPDATE 1 FROM lennufirma.kuupaevade_vahemiku_maandumiskeeld
+        SELECT 1 FROM lennufirma.kuupaevade_vahemiku_maandumiskeeld
         WHERE lennujaam_kood = p_airport_code
           AND p_arrival_time >= keeld_alguse_aeg
-          AND p_arrival_time < keeld_lopu_aeg
+          AND p_arrival_time < keeld_lopu_aeg FOR UPDATE
     ) THEN
         RAISE EXCEPTION 'Landing ban active at airport % during the planned arrival time %.', p_airport_code, p_arrival_time;
     END IF;
@@ -566,7 +566,7 @@ CREATE OR REPLACE FUNCTION lennufirma.fn_check_airport_seisund(
 DECLARE
     v_status VARCHAR(20);
 BEGIN
-    SELECT FOR UPDATE seisund_kood INTO v_status FROM lennufirma.lennujaam WHERE lennujaam_kood = p_airport_code;
+    SELECT seisund_kood INTO v_status FROM lennufirma.lennujaam WHERE lennujaam_kood = p_airport_code FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'Airport % not found.', p_airport_code; END IF;
     IF v_status <> 'OPEN' THEN
         RAISE EXCEPTION 'Airport % is not operational (Status: %).', p_airport_code, v_status;
@@ -582,7 +582,7 @@ CREATE OR REPLACE FUNCTION lennufirma.fn_check_aircraft_seisund(
 DECLARE
     v_status VARCHAR(20);
 BEGIN
-    SELECT FOR UPDATE seisund_kood INTO v_status FROM lennufirma.lennuk WHERE registreerimisnumber = p_aircraft_reg_nr;
+    SELECT seisund_kood INTO v_status FROM lennufirma.lennuk WHERE registreerimisnumber = p_aircraft_reg_nr FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'Aircraft % not found.', p_aircraft_reg_nr; END IF;
     IF v_status <> 'ACTIVE' THEN
         RAISE EXCEPTION 'Aircraft % is not operational (Status: %).', p_aircraft_reg_nr, v_status;
@@ -608,8 +608,8 @@ DECLARE
     lat1 DECIMAL(9, 6); lon1 DECIMAL(9, 6); lat2 DECIMAL(9, 6); lon2 DECIMAL(9, 6);
     R INT := 6371; dLat FLOAT; dLon FLOAT; a FLOAT; c FLOAT; d DECIMAL(10, 2);
 BEGIN
-    SELECT FOR UPDATE koordinaadid_laius, koordinaadid_pikkus INTO lat1, lon1 FROM lennufirma.lennujaam WHERE lennujaam_kood = p_lahtelennujaam_kood;
-    SELECT FOR UPDATE koordinaadid_laius, koordinaadid_pikkus INTO lat2, lon2 FROM lennufirma.lennujaam WHERE lennujaam_kood = p_sihtlennujaam_kood;
+    SELECT koordinaadid_laius, koordinaadid_pikkus INTO lat1, lon1 FROM lennufirma.lennujaam WHERE lennujaam_kood = p_lahtelennujaam_kood FOR UPDATE;
+    SELECT koordinaadid_laius, koordinaadid_pikkus INTO lat2, lon2 FROM lennufirma.lennujaam WHERE lennujaam_kood = p_sihtlennujaam_kood FOR UPDATE;
     IF lat1 IS NULL OR lon1 IS NULL OR lat2 IS NULL OR lon2 IS NULL THEN RAISE EXCEPTION 'Coordinates not found for one or both airports (%, %).', p_lahtelennujaam_kood, p_sihtlennujaam_kood; END IF;
     dLat = radians(lat2 - lat1); dLon = radians(lon2 - lon1); lat1 = radians(lat1); lat2 = radians(lat2);
     a = sin(dLat / 2) * sin(dLat / 2) + sin(dLon / 2) * sin(dLon / 2) * cos(lat1) * cos(lat2);
@@ -637,10 +637,10 @@ BEGIN
   IF p_lennukituup_kood IS NULL AND p_lennuk_reg_nr IS NULL THEN RAISE EXCEPTION 'OP1 Error: Must specify either aircraft type or specific aircraft.'; END IF;
 
   -- Existence Checks (as before)...
-  SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaam lj WHERE lj.lennujaam_kood = p_lahtelennujaam_kood) INTO v_dep_airport_exists; IF NOT v_dep_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Departure airport % not found.', p_lahtelennujaam_kood; END IF;
-  SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaam lj WHERE lj.lennujaam_kood = p_sihtlennujaam_kood) INTO v_arr_airport_exists; IF NOT v_arr_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Destination airport % not found.', p_sihtlennujaam_kood; END IF;
-  IF p_lennukituup_kood IS NOT NULL THEN SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennukituup lt WHERE lt.lennukituup_kood = p_lennukituup_kood) INTO v_type_exists; IF NOT v_type_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not found.', p_lennukituup_kood; END IF; END IF;
-  IF p_lennuk_reg_nr IS NOT NULL THEN SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr)) INTO v_plane_exists; IF NOT v_plane_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft % not found.', upper(p_lennuk_reg_nr); END IF; END IF;
+  SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaam lj WHERE lj.lennujaam_kood = p_lahtelennujaam_kood) INTO v_dep_airport_exists FOR UPDATE; IF NOT v_dep_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Departure airport % not found.', p_lahtelennujaam_kood; END IF;
+  SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaam lj WHERE lj.lennujaam_kood = p_sihtlennujaam_kood) INTO v_arr_airport_exists FOR UPDATE; IF NOT v_arr_airport_exists THEN RAISE EXCEPTION 'OP1 Error: Destination airport % not found.', p_sihtlennujaam_kood; END IF;
+  IF p_lennukituup_kood IS NOT NULL THEN SELECT EXISTS (SELECT 1 FROM lennufirma.lennukituup lt WHERE lt.lennukituup_kood = p_lennukituup_kood) INTO v_type_exists FOR UPDATE; IF NOT v_type_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not found.', p_lennukituup_kood; END IF; END IF;
+  IF p_lennuk_reg_nr IS NOT NULL THEN SELECT EXISTS (SELECT 1 FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr)) INTO v_plane_exists FOR UPDATE; IF NOT v_plane_exists THEN RAISE EXCEPTION 'OP1 Error: Aircraft % not found.', upper(p_lennuk_reg_nr); END IF; END IF;
 
   -- Operational Status Checks (as before)...
   PERFORM fn_check_airport_seisund(p_lahtelennujaam_kood);
@@ -652,25 +652,25 @@ BEGIN
 
   -- Airport Type Compatibility Checks (as before)...
   IF p_lennukituup_kood IS NOT NULL THEN
-    SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_lahtelennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_departure; IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at departure airport %.', p_lennukituup_kood, p_lahtelennujaam_kood; END IF;
-    SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_sihtlennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_arrival; IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at destination airport %.', p_lennukituup_kood, p_sihtlennujaam_kood; END IF;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_lahtelennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_departure FOR UPDATE; IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at departure airport %.', p_lennukituup_kood, p_lahtelennujaam_kood; END IF;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = p_sihtlennujaam_kood AND llvt.lennukituup_kood = p_lennukituup_kood) INTO v_aircraft_type_supported_arrival FOR UPDATE; IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP1 Error: Aircraft type % not supported at destination airport %.', p_lennukituup_kood, p_sihtlennujaam_kood; END IF;
   END IF;
 
   -- Aircraft Assignment Type Check (as before)...
   IF p_lennuk_reg_nr IS NOT NULL AND p_lennukituup_kood IS NOT NULL THEN
-     SELECT FOR UPDATE lk.lennukituup_kood INTO v_actual_aircraft_type FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr);
+     SELECT lk.lennukituup_kood INTO v_actual_aircraft_type FROM lennufirma.lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr) FOR UPDATE;
      IF v_actual_aircraft_type <> p_lennukituup_kood THEN RAISE EXCEPTION 'OP1 Error: Assigned aircraft % type (%) does not match flight required type (%).', upper(p_lennuk_reg_nr), v_actual_aircraft_type, p_lennukituup_kood; END IF;
   END IF;
 
   -- *** ADDED: Maintenance Conflict Check ***
   IF p_lennuk_reg_nr IS NOT NULL THEN
       SELECT EXISTS (
-          SELECT FOR UPDATE 1 FROM lennufirma.hooldus h
+          SELECT 1 FROM lennufirma.hooldus h
           WHERE h.lennuk_reg_nr = upper(p_lennuk_reg_nr)
           AND h.seisund_kood <> 'CANCELED' -- Ignore canceled maintenance
           -- Check for overlap using standard operators
           AND h.alguse_aeg < p_eeldatav_saabumis_aeg
-          AND h.lopu_aeg > p_eeldatav_lahkumis_aeg
+          AND h.lopu_aeg > p_eeldatav_lahkumis_aeg FOR UPDATE
       ) INTO v_is_in_maintenance;
 
       IF v_is_in_maintenance THEN
@@ -699,7 +699,7 @@ DECLARE
     v_current_seisund VARCHAR(20);
     v_updated_rows INT;
 BEGIN
-    SELECT FOR UPDATE l.seisund_kood INTO v_current_seisund FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+    SELECT l.seisund_kood INTO v_current_seisund FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'OP3 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
     IF v_current_seisund NOT IN ('PLANNED', 'CONFIRMED', 'DELAYED', 'BOARDING', 'GATE DEPARTED') THEN RAISE EXCEPTION 'OP3 Error: Flight % cannot be canceled in status %.', upper(p_lennu_kood), v_current_seisund; END IF;
     IF p_pohjus IS NULL OR p_pohjus ~ '^[[:space:]]*$' THEN RAISE EXCEPTION 'OP3 Error: Cancellation reason is required and cannot be empty.'; END IF;
@@ -721,9 +721,9 @@ DECLARE
     v_siht_kood VARCHAR(3);
     v_updated_rows INT;
 BEGIN
-    SELECT FOR UPDATE l.seisund_kood, l.eeldatav_lahkumis_aeg, l.sihtlennujaam_kood
+    SELECT l.seisund_kood, l.eeldatav_lahkumis_aeg, l.sihtlennujaam_kood
     INTO v_lend_seisund, v_original_lahkumis_aeg, v_siht_kood
-    FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+    FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
 
     IF NOT FOUND THEN RAISE EXCEPTION 'OP4 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
     IF v_lend_seisund NOT IN ('PLANNED', 'CONFIRMED', 'DELAYED') THEN RAISE EXCEPTION 'OP4 Error: Flight % cannot be marked delayed in status %.', upper(p_lennu_kood), v_lend_seisund; END IF;
@@ -746,7 +746,7 @@ CREATE OR REPLACE FUNCTION fn_op13_kustuta_lend(p_lennu_kood VARCHAR(10))
 RETURNS BOOLEAN LANGUAGE plpgsql AS $$
 DECLARE v_lend_seisund VARCHAR(20); v_count INT;
 BEGIN
-  SELECT FOR UPDATE l.seisund_kood INTO v_lend_seisund FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+  SELECT l.seisund_kood INTO v_lend_seisund FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OP13 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
   IF v_lend_seisund <> 'PLANNED' THEN RAISE EXCEPTION 'OP13 Error: Flight % cannot be deleted as it is not in PLANNED status (current: %).', upper(p_lennu_kood), v_lend_seisund; END IF;
   DELETE FROM lend WHERE lend_kood = upper(p_lennu_kood);
@@ -769,17 +769,17 @@ DECLARE
   v_aircraft_type_supported_departure BOOLEAN; v_aircraft_type_supported_arrival BOOLEAN;
 BEGIN
   -- Fetch current flight data
-  SELECT FOR UPDATE l.* INTO v_lend FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+  SELECT l.* INTO v_lend FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OP14 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
 
   -- Check current status
   IF v_lend.seisund_kood NOT IN ('PLANNED', 'CONFIRMED', 'DELAYED') THEN RAISE EXCEPTION 'OP14 Error: Flight % data cannot be modified in status %.', upper(p_lennu_kood), v_lend.seisund_kood; END IF;
 
   -- Basic existence checks for new FK values if provided
-  IF p_uus_lahtelennujaam_kood IS NOT NULL AND NOT EXISTS (SELECT FOR UPDATE 1 FROM lennujaam lj WHERE lj.lennujaam_kood = p_uus_lahtelennujaam_kood) THEN RAISE EXCEPTION 'OP14 Error: New departure airport % not found.', p_uus_lahtelennujaam_kood; END IF;
-  IF p_uus_sihtlennujaam_kood IS NOT NULL AND NOT EXISTS (SELECT FOR UPDATE 1 FROM lennujaam lj WHERE lj.lennujaam_kood = p_uus_sihtlennujaam_kood) THEN RAISE EXCEPTION 'OP14 Error: New destination airport % not found.', p_uus_sihtlennujaam_kood; END IF;
-  IF p_uus_lennukituup_kood IS NOT NULL AND NOT EXISTS (SELECT FOR UPDATE 1 FROM lennukituup lt WHERE lt.lennukituup_kood = p_uus_lennukituup_kood) THEN RAISE EXCEPTION 'OP14 Error: New aircraft type % not found.', p_uus_lennukituup_kood; END IF;
-  IF p_uus_lennuk_reg_nr IS NOT NULL AND NOT EXISTS (SELECT FOR UPDATE 1 FROM lennuk lk WHERE lk.registreerimisnumber = p_uus_lennuk_reg_nr) THEN RAISE EXCEPTION 'OP14 Error: New aircraft % not found.', p_uus_lennuk_reg_nr; END IF;
+  IF p_uus_lahtelennujaam_kood IS NOT NULL AND NOT EXISTS (SELECT 1 FROM lennujaam lj WHERE lj.lennujaam_kood = p_uus_lahtelennujaam_kood) FOR UPDATE THEN RAISE EXCEPTION 'OP14 Error: New departure airport % not found.', p_uus_lahtelennujaam_kood; END IF;
+  IF p_uus_sihtlennujaam_kood IS NOT NULL AND NOT EXISTS (SELECT 1 FROM lennujaam lj WHERE lj.lennujaam_kood = p_uus_sihtlennujaam_kood) FOR UPDATE THEN RAISE EXCEPTION 'OP14 Error: New destination airport % not found.', p_uus_sihtlennujaam_kood; END IF;
+  IF p_uus_lennukituup_kood IS NOT NULL AND NOT EXISTS (SELECT 1 FROM lennukituup lt WHERE lt.lennukituup_kood = p_uus_lennukituup_kood) FOR UPDATE THEN RAISE EXCEPTION 'OP14 Error: New aircraft type % not found.', p_uus_lennukituup_kood; END IF;
+  IF p_uus_lennuk_reg_nr IS NOT NULL AND NOT EXISTS (SELECT 1 FROM lennuk lk WHERE lk.registreerimisnumber = p_uus_lennuk_reg_nr) FOR UPDATE THEN RAISE EXCEPTION 'OP14 Error: New aircraft % not found.', p_uus_lennuk_reg_nr; END IF;
 
   -- Determine final values after potential update
   v_final_lahkumis_aeg := COALESCE(p_uus_lahkumis_aeg, v_lend.eeldatav_lahkumis_aeg);
@@ -804,9 +804,9 @@ BEGIN
 
   -- Final Airport Type Compatibility Checks
   IF v_final_tuup_kood IS NOT NULL THEN
-    SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_final_lahke_kood AND llvt.lennukituup_kood = v_final_tuup_kood) INTO v_aircraft_type_supported_departure;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_final_lahke_kood AND llvt.lennukituup_kood = v_final_tuup_kood FOR UPDATE) INTO v_aircraft_type_supported_departure;
     IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP14 Error: Final aircraft type % not supported at final departure airport %.', v_final_tuup_kood, v_final_lahke_kood; END IF;
-    SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_final_siht_kood AND llvt.lennukituup_kood = v_final_tuup_kood) INTO v_aircraft_type_supported_arrival;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_final_siht_kood AND llvt.lennukituup_kood = v_final_tuup_kood FOR UPDATE) INTO v_aircraft_type_supported_arrival;
     IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP14 Error: Final aircraft type % not supported at final destination airport %.', v_final_tuup_kood, v_final_siht_kood; END IF;
   END IF;
 
@@ -849,14 +849,14 @@ DECLARE
     v_updated_rows INT;
 BEGIN
     -- Fetch flight details
-    SELECT FOR UPDATE l.seisund_kood, l.lennukituup_kood, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.lahtelennujaam_kood, l.sihtlennujaam_kood
+    SELECT l.seisund_kood, l.lennukituup_kood, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.lahtelennujaam_kood, l.sihtlennujaam_kood
     INTO v_lend_seisund, v_lend_tuup_kood, v_lend_lahkumis_aeg, v_lend_saabumis_aeg, v_lend_lahtelennujaam_kood, v_lend_sihtlennujaam_kood
-    FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+    FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'OP18 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
 
     -- Fetch aircraft details
-    SELECT FOR UPDATE lk.seisund_kood, lk.lennukituup_kood INTO v_lennuk_seisund, v_lennuk_tuup_kood
-    FROM lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr);
+    SELECT lk.seisund_kood, lk.lennukituup_kood INTO v_lennuk_seisund, v_lennuk_tuup_kood
+    FROM lennuk lk WHERE lk.registreerimisnumber = upper(p_lennuk_reg_nr) FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'OP18 Error: Aircraft with reg nr % not found.', upper(p_lennuk_reg_nr); END IF;
 
     -- Status Checks
@@ -867,30 +867,30 @@ BEGIN
     IF v_lend_tuup_kood IS NOT NULL AND v_lennuk_tuup_kood <> v_lend_tuup_kood THEN RAISE EXCEPTION 'OP18 Error: Aircraft % type (%) does not match flight % required type (%).', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, upper(p_lennu_kood), v_lend_tuup_kood; END IF;
 
     -- Airport Compatibility Check
-    SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_lend_lahtelennujaam_kood AND llvt.lennukituup_kood = v_lennuk_tuup_kood) INTO v_aircraft_type_supported_departure;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_lend_lahtelennujaam_kood AND llvt.lennukituup_kood = v_lennuk_tuup_kood FOR UPDATE) INTO v_aircraft_type_supported_departure;
     IF NOT v_aircraft_type_supported_departure THEN RAISE EXCEPTION 'OP18 Error: Assigned aircraft % type (%) not supported at departure airport %.', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, v_lend_lahtelennujaam_kood; END IF;
-    SELECT EXISTS (SELECT FOR UPDATE 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_lend_sihtlennujaam_kood AND llvt.lennukituup_kood = v_lennuk_tuup_kood) INTO v_aircraft_type_supported_arrival;
+    SELECT EXISTS (SELECT 1 FROM lennufirma.lennujaama_vastuvoetavad_lennukituubid llvt WHERE llvt.lennujaam_kood = v_lend_sihtlennujaam_kood AND llvt.lennukituup_kood = v_lennuk_tuup_kood FOR UPDATE) INTO v_aircraft_type_supported_arrival;
     IF NOT v_aircraft_type_supported_arrival THEN RAISE EXCEPTION 'OP18 Error: Assigned aircraft % type (%) not supported at destination airport %.', upper(p_lennuk_reg_nr), v_lennuk_tuup_kood, v_lend_sihtlennujaam_kood; END IF;
 
     -- Time Conflict Check (Other Flights)
     SELECT EXISTS (
-        SELECT FOR UPDATE 1 FROM lend l_conflict
+        SELECT 1 FROM lend l_conflict
         WHERE l_conflict.lennuk_reg_nr = upper(p_lennuk_reg_nr)
         AND l_conflict.lend_kood <> upper(p_lennu_kood)
-        AND l_conflict.seisund_kood NOT IN ('LÕPETATUD', 'TÜHISTATUD', 'MAANDUNUD', 'PARDALT LAHKUMINE')
+        AND l_conflict.seisund_kood NOT IN ('COMPLETED', 'CANCELED', 'LANDED', 'DEBOARDING')
         AND (l_conflict.eeldatav_lahkumis_aeg - INTERVAL '2 hour') < v_lend_saabumis_aeg
-        AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '2 hour') > v_lend_lahkumis_aeg
+        AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '2 hour') > v_lend_lahkumis_aeg FOR UPDATE
     ) INTO v_is_conflicting;
     IF v_is_conflicting THEN RAISE EXCEPTION 'OP18 Error: Aircraft % is already assigned to another flight with overlapping times.', upper(p_lennuk_reg_nr); END IF;
 
     -- Maintenance Conflict Check
     SELECT EXISTS (
-        SELECT FOR UPDATE 1 FROM lennufirma.hooldus h
+        SELECT 1 FROM lennufirma.hooldus h
         WHERE h.lennuk_reg_nr = upper(p_lennuk_reg_nr)
         AND h.seisund_kood <> 'CANCELED' -- Ignore canceled maintenance
         -- Check for overlap using standard operators
         AND h.alguse_aeg < v_lend_saabumis_aeg
-        AND h.lopu_aeg > v_lend_lahkumis_aeg
+        AND h.lopu_aeg > v_lend_lahkumis_aeg FOR UPDATE
     ) INTO v_is_in_maintenance;
 
     IF v_is_in_maintenance THEN
@@ -917,17 +917,17 @@ DECLARE
   v_tootaja_lennus_id INT; v_litsents_olemas BOOLEAN := TRUE; v_is_conflicting BOOLEAN;
 BEGIN
   -- Fetch flight details
-  SELECT FOR UPDATE l.seisund_kood, l.lennukituup_kood, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg
+  SELECT l.seisund_kood, l.lennukituup_kood, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg
   INTO v_lend_seisund, v_lend_tuup_kood, v_lend_lahkumis_aeg, v_lend_saabumis_aeg
-  FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+  FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OP16 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
 
   -- Fetch employee status from tootaja table
-  SELECT FOR UPDATE t.seisund_kood INTO v_tootaja_seisund FROM tootaja t WHERE t.isik_id = p_tootaja_isik_id;
+  SELECT t.seisund_kood INTO v_tootaja_seisund FROM tootaja t WHERE t.isik_id = p_tootaja_isik_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OP16 Error: Employee with ID % not found.', p_tootaja_isik_id; END IF;
 
   -- Check role existence
-  IF NOT EXISTS (SELECT FOR UPDATE 1 FROM tootaja_roll tr WHERE tr.r_kood = p_rolli_kood) THEN RAISE EXCEPTION 'OP16 Error: Employee role with code % not found.', p_rolli_kood; END IF;
+  IF NOT EXISTS (SELECT 1 FROM tootaja_roll tr WHERE tr.r_kood = p_rolli_kood FOR UPDATE) THEN RAISE EXCEPTION 'OP16 Error: Employee role with code % not found.', p_rolli_kood; END IF;
 
   -- Check flight status (must be plannable)
   IF v_lend_seisund NOT IN ('PLANNED', 'DELAYED') THEN RAISE EXCEPTION 'OP16 Error: Employee cannot be added to flight % in status %.', upper(p_lennu_kood), v_lend_seisund; END IF;
@@ -943,12 +943,12 @@ BEGIN
     IF v_lend_tuup_kood IS NULL THEN RAISE EXCEPTION 'OP16 Error: Flight % has no assigned aircraft type, cannot add pilot/captain.', upper(p_lennu_kood); END IF;
     -- Requires a license for the correct type/role, with status 'VALID', and not expired
     SELECT EXISTS (
-        SELECT FOR UPDATE 1 FROM litsents li
+        SELECT 1 FROM litsents li
         WHERE li.tootaja_isik_id = p_tootaja_isik_id
           AND li.lennukituup_kood = v_lend_tuup_kood
           AND li.r_kood = p_rolli_kood
           AND li.seisund_kood = 'VALID' -- Check against 'VALID' status code
-          AND li.kehtivuse_lopp >= v_lend_lahkumis_aeg -- Check expiration date
+          AND li.kehtivuse_lopp >= v_lend_lahkumis_aeg FOR UPDATE -- Check expiration date
     ) INTO v_litsents_olemas;
     IF NOT v_litsents_olemas THEN
         RAISE EXCEPTION 'OP16 Error: Employee % lacks a license for role % and type % with status VALID, or it expires before departure (%).',
@@ -958,7 +958,7 @@ BEGIN
 
   -- Check Time Conflicts (3-hour buffer)
 SELECT EXISTS (
-    SELECT FOR UPDATE 1
+    SELECT 1
     FROM tootaja_lennus tl
     JOIN lend l_conflict ON tl.lend_kood = l_conflict.lend_kood -- Corrected JOIN condition to use kood
     WHERE
@@ -967,10 +967,10 @@ SELECT EXISTS (
         -- Exclude the specific flight being assigned/modified
     AND l_conflict.lend_kood <> upper(p_lennu_kood) -- Assuming kood is the primary key for lend
         -- Exclude flights that are definitely finished or cancelled
-    AND l_conflict.seisund_kood NOT IN ('LÕPETATUD', 'TÜHISTATUD', 'MAANDUNUD', 'PARDALT LAHKUMINE') -- Use your actual status codes
+    AND l_conflict.seisund_kood NOT IN ('COMPLETED', 'CANCELED', 'LANDED', 'DEBOARDING') -- Use your actual status codes
         -- Overlap check using standard operators:
     AND (l_conflict.eeldatav_lahkumis_aeg - INTERVAL '3 hour') < v_lend_saabumis_aeg -- Conflict starts before new one ends
-    AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '3 hour') > v_lend_lahkumis_aeg -- Conflict ends after new one starts
+    AND (l_conflict.eeldatav_saabumis_aeg + INTERVAL '3 hour') > v_lend_lahkumis_aeg FOR UPDATE -- Conflict ends after new one starts
 )
 INTO v_is_conflicting; -- Assign the boolean result to your variable
   IF v_is_conflicting THEN RAISE EXCEPTION 'OP16 Error: Employee % is already assigned to another flight with overlapping times.', p_tootaja_isik_id; END IF;
@@ -989,7 +989,7 @@ CREATE OR REPLACE FUNCTION fn_op17_eemalda_tootaja_lennult(p_lennu_kood VARCHAR(
 RETURNS BOOLEAN LANGUAGE plpgsql AS $$
 DECLARE v_lend_seisund VARCHAR(20); v_deleted_count INT;
 BEGIN
-  SELECT FOR UPDATE l.seisund_kood INTO v_lend_seisund FROM lend l WHERE l.lend_kood = upper(p_lennu_kood);
+  SELECT l.seisund_kood INTO v_lend_seisund FROM lend l WHERE l.lend_kood = upper(p_lennu_kood) FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'OP17 Error: Flight with code % not found.', upper(p_lennu_kood); END IF;
   IF v_lend_seisund NOT IN ('PLANNED', 'DELAYED') THEN RAISE EXCEPTION 'OP17 Error: Employee cannot be removed from flight % in status %.', upper(p_lennu_kood), v_lend_seisund; END IF;
   DELETE FROM tootaja_lennus WHERE lend_kood = upper(p_lennu_kood) AND tootaja_isik_id = p_tootaja_isik_id;
@@ -1016,8 +1016,8 @@ COMMENT ON FUNCTION lennufirma.fn_isik_create IS 'Creates a new person (isik) re
 -- Tootaja Create
 CREATE OR REPLACE FUNCTION fn_tootaja_create(p_isik_id INT, p_seisund VARCHAR(20)) RETURNS INT LANGUAGE plpgsql AS $$
 BEGIN
-  IF NOT EXISTS (SELECT FOR UPDATE 1 FROM isik WHERE isik_id = p_isik_id) THEN RAISE EXCEPTION 'Person with ID % not found.', p_isik_id; END IF;
-  IF NOT EXISTS (SELECT FOR UPDATE 1 FROM tootaja_seisund_liik WHERE seisund_kood = p_seisund) THEN RAISE EXCEPTION 'Employee status % not found.', p_seisund; END IF;
+  IF NOT EXISTS (SELECT 1 FROM isik WHERE isik_id = p_isik_id FOR UPDATE) THEN RAISE EXCEPTION 'Person with ID % not found.', p_isik_id; END IF;
+  IF NOT EXISTS (SELECT 1 FROM tootaja_seisund_liik WHERE seisund_kood = p_seisund FOR UPDATE) THEN RAISE EXCEPTION 'Employee status % not found.', p_seisund; END IF;
   INSERT INTO tootaja (isik_id, seisund_kood) VALUES (p_isik_id, p_seisund);
   RETURN p_isik_id;
 END; $$;
@@ -1026,42 +1026,42 @@ COMMENT ON FUNCTION lennufirma.fn_tootaja_create IS 'Creates a new employee (too
 -- Read functions
 CREATE OR REPLACE FUNCTION lennufirma.fn_lennujaam_read_all()
 RETURNS TABLE (lennujaam_kood VARCHAR, lj_nimetus VARCHAR, seisund_kood VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE lj.lennujaam_kood, lj.lj_nimetus, lj.seisund_kood FROM lennufirma.lennujaam lj WHERE lj.seisund_kood = 'OPEN' ORDER BY lj.lj_nimetus; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT lj.lennujaam_kood, lj.lj_nimetus, lj.seisund_kood FROM lennufirma.lennujaam lj WHERE lj.seisund_kood = 'OPEN' ORDER BY lj.lj_nimetus FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lennujaam_read_all IS 'Returns all open airports for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lennukituup_read_all()
 RETURNS TABLE (lennukituup_kood VARCHAR, lt_nimetus VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE lt.lennukituup_kood, lt.lt_nimetus FROM lennufirma.lennukituup lt ORDER BY lt.lt_nimetus; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT lt.lennukituup_kood, lt.lt_nimetus FROM lennufirma.lennukituup lt ORDER BY lt.lt_nimetus FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lennukituup_read_all IS 'Returns all aircraft types for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lennuk_read_all()
 RETURNS TABLE (registreerimisnumber VARCHAR, lennukituup_kood VARCHAR, seisund_kood VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE lk.registreerimisnumber, lk.lennukituup_kood, lk.seisund_kood FROM lennufirma.lennuk lk WHERE lk.seisund_kood = 'ACTIVE' ORDER BY lk.registreerimisnumber; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT lk.registreerimisnumber, lk.lennukituup_kood, lk.seisund_kood FROM lennufirma.lennuk lk WHERE lk.seisund_kood = 'ACTIVE' ORDER BY lk.registreerimisnumber FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lennuk_read_all IS 'Returns all active aircraft for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_tootaja_read_active()
 RETURNS TABLE (isik_id INT, eesnimi VARCHAR, perenimi VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE i.isik_id, i.eesnimi, i.perenimi FROM lennufirma.isik i JOIN lennufirma.tootaja t ON i.isik_id = t.isik_id WHERE t.seisund_kood = 'WORKING' ORDER BY i.eesnimi, i.perenimi; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT i.isik_id, i.eesnimi, i.perenimi FROM lennufirma.isik i JOIN lennufirma.tootaja t ON i.isik_id = t.isik_id WHERE t.seisund_kood = 'WORKING' ORDER BY i.eesnimi, i.perenimi FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_tootaja_read_active IS 'Returns all active employees for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_tootaja_roll_read_all()
 RETURNS TABLE (r_kood VARCHAR, tr_nimetus VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE tr.r_kood, tr.tr_nimetus FROM lennufirma.tootaja_roll tr ORDER BY tr.tr_nimetus; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT tr.r_kood, tr.tr_nimetus FROM lennufirma.tootaja_roll tr ORDER BY tr.tr_nimetus FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_tootaja_roll_read_all IS 'Returns all employee roles for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lend_read_all()
 RETURNS TABLE (lend_kood VARCHAR, lahtelennujaam_kood VARCHAR, sihtlennujaam_kood VARCHAR, lennukituup_kood VARCHAR, lennuk_reg_nr VARCHAR, eeldatav_lahkumis_aeg TIMESTAMP(0), eeldatav_saabumis_aeg TIMESTAMP(0), tegelik_lahkumis_aeg TIMESTAMP(0), tegelik_saabumis_aeg TIMESTAMP(0), seisund_kood VARCHAR, kaugus_linnulennult DECIMAL, tuhistamise_pohjus VARCHAR(100)) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE l.lend_kood, l.lahtelennujaam_kood, l.sihtlennujaam_kood, l.lennukituup_kood, l.lennuk_reg_nr, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.tegelik_lahkumis_aeg, l.tegelik_saabumis_aeg, l.seisund_kood, l.kaugus_linnulennult, l.tuhistamise_pohjus FROM lennufirma.lend l ORDER BY l.eeldatav_lahkumis_aeg DESC; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT l.lend_kood, l.lahtelennujaam_kood, l.sihtlennujaam_kood, l.lennukituup_kood, l.lennuk_reg_nr, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.tegelik_lahkumis_aeg, l.tegelik_saabumis_aeg, l.seisund_kood, l.kaugus_linnulennult, l.tuhistamise_pohjus FROM lennufirma.lend l ORDER BY l.eeldatav_lahkumis_aeg DESC FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lend_read_all IS 'Returns all flights for listing.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lend_read_by_kood(p_kood VARCHAR)
 RETURNS TABLE (lend_kood VARCHAR, lahtelennujaam_kood VARCHAR, sihtlennujaam_kood VARCHAR, lennukituup_kood VARCHAR, lennuk_reg_nr VARCHAR, eeldatav_lahkumis_aeg TIMESTAMP(0), eeldatav_saabumis_aeg TIMESTAMP(0), tegelik_lahkumis_aeg TIMESTAMP(0), tegelik_saabumis_aeg TIMESTAMP(0), seisund_kood VARCHAR, kaugus_linnulennult DECIMAL, tuhistamise_pohjus VARCHAR(100)) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE l.lend_kood, l.lahtelennujaam_kood, l.sihtlennujaam_kood, l.lennukituup_kood, l.lennuk_reg_nr, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.tegelik_lahkumis_aeg, l.tegelik_saabumis_aeg, l.seisund_kood, l.kaugus_linnulennult, l.tuhistamise_pohjus FROM lennufirma.lend l WHERE l.lend_kood = upper(p_kood); END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT l.lend_kood, l.lahtelennujaam_kood, l.sihtlennujaam_kood, l.lennukituup_kood, l.lennuk_reg_nr, l.eeldatav_lahkumis_aeg, l.eeldatav_saabumis_aeg, l.tegelik_lahkumis_aeg, l.tegelik_saabumis_aeg, l.seisund_kood, l.kaugus_linnulennult, l.tuhistamise_pohjus FROM lennufirma.lend l WHERE l.lend_kood = upper(p_kood) FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lend_read_by_kood IS 'Returns details of a specific flight by its code.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_lend_read_tootajad(p_lennu_kood VARCHAR)
 RETURNS TABLE (tootaja_lennus_id INT, tootaja_isik_id INT, eesnimi VARCHAR, perenimi VARCHAR, r_kood VARCHAR, roll_nimetus VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT FOR UPDATE tl.tootaja_lennus_id, tl.tootaja_isik_id, i.eesnimi, i.perenimi, tl.r_kood, tr.nimetus AS roll_nimetus FROM lennufirma.tootaja_lennus tl JOIN lennufirma.tootaja t ON tl.tootaja_isik_id = t.isik_id JOIN lennufirma.isik i ON t.isik_id = i.isik_id JOIN lennufirma.tootaja_roll tr ON tl.r_kood = tr.r_kood WHERE tl.lend_kood = upper(p_lennu_kood) ORDER BY tr.nimetus, i.eesnimi, i.perenimi; END; $$ LANGUAGE plpgsql;
+BEGIN RETURN QUERY SELECT tl.tootaja_lennus_id, tl.tootaja_isik_id, i.eesnimi, i.perenimi, tl.r_kood, tr.nimetus AS roll_nimetus FROM lennufirma.tootaja_lennus tl JOIN lennufirma.tootaja t ON tl.tootaja_isik_id = t.isik_id JOIN lennufirma.isik i ON t.isik_id = i.isik_id JOIN lennufirma.tootaja_roll tr ON tl.r_kood = tr.r_kood WHERE tl.lend_kood = upper(p_lennu_kood) ORDER BY tr.nimetus, i.eesnimi, i.perenimi FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_lend_read_tootajad IS 'Returns all employees assigned to a specific flight with their roles.';
 
 -- ========================================================================== --
