@@ -60,8 +60,9 @@ try {
     $aircraft_types = fetchDropdownData($pdo, 'fn_lennukituup_read_all', 'lennukituup_kood', 'lt_nimetus');
     $aircraft = fetchDropdownData($pdo, 'fn_lennuk_read_all', 'registreerimisnumber', 'registreerimisnumber');
     $employees = fetchDropdownData($pdo, 'fn_tootaja_read_active', 'isik_id', null, function($row) {
-        return trim(($row['eesnimi'] ?? '') . ' ' . ($row['perenimi'] ?? '')) . " (ID: {$row['isik_id']})";
+        return ($row['eesnimi'] ?? '') . ' ' . ($row['perenimi'] ?? '') . ' ' . ($row['e_meil'] ?? '');
     });
+    
     $employee_roles = fetchDropdownData($pdo, 'fn_tootaja_roll_read_all', 'r_kood', 'tr_nimetus');
 
     // --- Populate Validation Context (Reduced) ---
@@ -103,7 +104,7 @@ try {
         // If managing staffing, fetch current crew (keep this logic)
         if ($crud_data && $action === 'manage_staffing') {
             // Assuming fn_lend_read_tootajad exists or use a direct query:
-             $stmt_crew = $pdo->prepare("SELECT i.isik_id, i.eesnimi, i.perenimi, tr.tr_nimetus as rolli_nimetus
+             $stmt_crew = $pdo->prepare("SELECT i.isik_id, i.e_meil, i.eesnimi, i.perenimi, tr.tr_nimetus as rolli_nimetus
                                         FROM lennufirma.tootaja_lennus tl
                                         JOIN lennufirma.isik i ON tl.tootaja_isik_id = i.isik_id
                                         JOIN lennufirma.tootaja_roll tr ON tl.r_kood = tr.r_kood

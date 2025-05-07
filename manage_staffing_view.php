@@ -8,7 +8,6 @@ $errors = $formErrors ?? [];
 
 <h2>Manage Staffing: <?= htmlspecialchars($flight['lend_kood'] ?? 'N/A') ?></h2>
 
-
 <?php if (empty($flight)): ?>
     <p>Flight not found.</p>
 <?php else: ?>
@@ -25,7 +24,7 @@ $errors = $formErrors ?? [];
         <table>
             <thead>
                 <tr>
-                    <th>Employee ID</th>
+                    <th>Email</th>
                     <th>Name</th>
                     <th>Role</th>
                     <th>Action</th>
@@ -34,7 +33,7 @@ $errors = $formErrors ?? [];
             <tbody>
                 <?php foreach ($crew as $member): ?>
                     <tr>
-                        <td><?= htmlspecialchars($member['isik_id'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($member['e_meil'] ?? '') ?></td>
                         <td><?= htmlspecialchars(($member['eesnimi'] ?? '') . ' ' . ($member['perenimi'] ?? '')) ?></td>
                         <td><?= htmlspecialchars($member['rolli_nimetus'] ?? '') ?></td>
                         <td>
@@ -63,36 +62,58 @@ $errors = $formErrors ?? [];
     <?php endif; ?>
 
     <h3>Add Employee to Crew</h3>
+    
     <form method="post" action="">
         <input type="hidden" name="action" value="do_add_employee">
         <input type="hidden" name="lend_kood" value="<?= htmlspecialchars($flight['lend_kood'] ?? '') ?>">
         <input type="hidden" name="redirect_back" value="<?= htmlspecialchars($_SERVER['PHP_SELF'] . '?action=manage_staffing&flight_code=' . urlencode($flight['lend_kood'] ?? '')) ?>">
 
         <div>
-            <label for="isik_id">Employee:</label>
-            <select id="isik_id" name="tootaja_isik_id" required>
+            <label for="tootaja_isik_id">Employee:</label>
+            <select id="tootaja_isik_id" name="tootaja_isik_id" required>
                 <option value="">Select Employee</option>
                 <?php 
                 // Create an array of employee IDs who are already assigned to this flight
                 $assigned_employee_ids = [];
                 foreach ($crew as $member) {
-                    $assigned_employee_ids[] = $member['isik_id'];
+                    if (isset($member['isik_id'])) {
+                        $assigned_employee_ids[] = $member['isik_id'];
+                    }
                 }
                 
-                // Only list employees who are not already part of the crew
-                foreach ($employees as $id => $name): 
+                // Display employees not already assigned to the flight
+                foreach ($employees as $id => $employee):
                     if (!in_array($id, $assigned_employee_ids)):
+                        // Extract email based on different possible data structures
+                        $display_email = '';
+                        
+                        // If $employee is an associative array with e_meil key
+                        if (is_array($employee) && isset($employee['e_meil'])) {
+                            $display_email = $employee['e_meil'];
+                        }
+                        // If $employee is a string that could directly be the email
+                        elseif (is_string($employee)) {
+                            $display_email = $employee;
+                        }
+                        // If $employee is a nested array with email in a specific position
+                        elseif (is_array($employee) && isset($employee[0])) {
+                            $display_email = $employee[0];
+                        }
+                        // Default fallback
+                        else {
+                            $display_email = "Employee #$id";
+                        }
                 ?>
-                    <option value="<?= htmlspecialchars($id) ?>" <?= ($oldInput['isik_id'] ?? '') === $id ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($name) ?>
+                    <option value="<?= htmlspecialchars($id) ?>" <?= ($oldInput['tootaja_isik_id'] ?? '') === $id ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($display_email) ?>
                     </option>
                 <?php 
                     endif;
                 endforeach; 
                 ?>
             </select>
-            <?php if (isset($errors['isik_id'])): ?>
-                <span class="error"><?= htmlspecialchars($errors['isik_id']) ?></span>
+            <?php if (isset($errors['tootaja_isik_id'])): ?>
+                <span class="error"><?= htmlspecialchars($errors['tootaja_isik_id']) ?></span>
             <?php endif; ?>
         </div>
 

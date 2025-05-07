@@ -1040,8 +1040,8 @@ BEGIN RETURN QUERY SELECT lk.registreerimisnumber, lk.lennukituup_kood, lk.seisu
 COMMENT ON FUNCTION fn_lennuk_read_all IS 'Returns all active aircraft for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_tootaja_read_active()
-RETURNS TABLE (isik_id INT, eesnimi VARCHAR, perenimi VARCHAR) AS $$
-BEGIN RETURN QUERY SELECT i.isik_id, i.eesnimi, i.perenimi FROM lennufirma.isik i JOIN lennufirma.tootaja t ON i.isik_id = t.isik_id WHERE t.seisund_kood = 'WORKING' ORDER BY i.eesnimi, i.perenimi FOR UPDATE; END; $$ LANGUAGE plpgsql;
+RETURNS TABLE (isik_id INT, eesnimi VARCHAR, perenimi VARCHAR, e_meil VARCHAR) AS $$
+BEGIN RETURN QUERY SELECT i.isik_id, i.eesnimi, i.perenimi, i.e_meil FROM lennufirma.isik i JOIN lennufirma.tootaja t ON i.isik_id = t.isik_id WHERE t.seisund_kood = 'WORKING' ORDER BY i.eesnimi, i.perenimi FOR UPDATE; END; $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION fn_tootaja_read_active IS 'Returns all active employees for dropdown selection.';
 
 CREATE OR REPLACE FUNCTION lennufirma.fn_tootaja_roll_read_all()
